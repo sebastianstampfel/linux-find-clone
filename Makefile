@@ -1,11 +1,13 @@
 ##
 ## @file Makefile
-## Betriebssysteme Hello Makefile
-## Beispiel 0
+## Betriebssysteme Myfind Makefile
+## Beispiel 1
+## Based on Hello-Makefile
 ##
-## @author Thomas M. Galla <galla@technikum-wien.at>
-## @author Bernd Petrovitsch <bernd.petrovitsch@technikum-wien.at>
-## @date 2005/02/22
+## @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+## @author Benjamin Wiesbauer <>
+## @author Milan Kollmann <>
+## @date 2020/02/20
 ##
 ## @version $Revision: 1689 $
 ##
@@ -44,16 +46,16 @@ EXCLUDE_PATTERN=footrulewidth
 ##
 
 .PHONY: all
-all: hello
+all: myfind
 
-hello: $(OBJECTS)
+myfind: $(OBJECTS)
 	$(CC) $(CFLAGS) -o "$@" "$^"
 
 .PRECIOUS: %.tex
 
 .PHONY: clean
 clean:
-	$(RM) *.o *~ hello
+	$(RM) *.o *~ myfind
 
 .PHONY: distclean
 distclean: clean
