@@ -46,6 +46,7 @@
 typedef struct action{
 	int type;
 	char *param;
+	struct action *next;
 } ACTION;
 
 // --------------------------------------------------------------- globals --
