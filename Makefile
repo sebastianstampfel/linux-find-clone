@@ -53,7 +53,7 @@ clean:
 distclean: clean
 	$(RM) -r doc
 
-doc: html pdf
+doc: html ## pdf
 
 .PHONY: html
 html:
