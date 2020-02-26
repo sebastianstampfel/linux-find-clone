@@ -1,6 +1,6 @@
 ##
 ## @file Makefile
-## Betriebssysteme Myfind Makefile
+## Betriebssysteme Myfind Makefile - Group 11
 ## Beispiel 1
 ## Based on Hello-Makefile
 ##
@@ -8,14 +8,6 @@
 ## @author Benjamin Wiesbauer <>
 ## @author Milan Kollmann <>
 ## @date 2020/02/20
-##
-## @version $Revision: 1689 $
-##
-## @todo
-##
-## URL: $HeadURL: https://svn.petrovitsch.priv.at/ICSS-BES/trunk/2015/CIS/lu/hello/Makefile $
-##
-## Last Modified: $Author: tom $
 ##
 
 ##
@@ -46,16 +38,16 @@ EXCLUDE_PATTERN=footrulewidth
 ##
 
 .PHONY: all
-all: myfind
+all: myfind-grp11
 
-myfind: $(OBJECTS)
+myfind-grp11: $(OBJECTS)
 	$(CC) $(CFLAGS) -o "$@" "$^"
 
 .PRECIOUS: %.tex
 
 .PHONY: clean
 clean:
-	$(RM) *.o *~ myfind
+	$(RM) *.o *~ myfind-grp11
 
 .PHONY: distclean
 distclean: clean
