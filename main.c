@@ -28,13 +28,32 @@
 
 // --------------------------------------------------------------- defines --
 
+#define USER 10
+#define NAME 11
+#define TYPE 12
+#define PRINT 13
+#define LS 14
+#define NOUSER 15
+#define PATH 16
+
 // -------------------------------------------------------------- typedefs --
+/// \struct action
+/// \brief Struct for storing a certain action.
+/// 
+/// Stores a certain action to be performed. Action type is stored as an int according to
+/// defined constants. Additionally, stores params for action that might be necessary.
+/// For correct order of actions, use as array.
+typedef struct action{
+	int type;
+	char *param;
+} ACTION;
 
 // --------------------------------------------------------------- globals --
 
 // ------------------------------------------------------------- functions --
 int do_dir(const char *dir_name);
 int do_file(const char * file_name);
+ACTION *parse_params(void);
 
 //*
 // \brief The most minimalistic C program
@@ -61,7 +80,20 @@ int main(int argc, const char *argv[])
 		printf("%s\n", argv[i]);
 	}
 
+
 	do_dir(".");
+
+	ACTION *list = parse_params();
+
+	ACTION *current = list;
+	int i = 0;
+	while(current->type != -1){
+		printf("Element %d Type: %d\n", i, current->type);
+		printf("Element %d Param: %s\n", i, current->param);
+
+		i++;
+		current = list+i;
+	}
 	/* DIR *root = opendir(".");
 	struct dirent *rootDir = readdir(root);
 
@@ -188,6 +220,26 @@ int do_file(const char * file_name){
 	printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats->st_ino, fileStats->st_blocks, permissions, fileStats->st_nlink, fileStats->st_uid, fileStats->st_gid, file_name);
 
 	return 0;
+}
+
+ACTION *parse_params(){
+	ACTION *actionList = calloc(3, sizeof(ACTION));
+
+	for(int i = 0; i < 3; i++){
+		ACTION *current = actionList + i;
+		if(i == 2){
+			current->type = -1;
+		} else {
+			current->type = USER + i;
+			current->param = calloc(10, sizeof(char));
+			*(current->param) = 'H';
+			*(current->param+1) = 'i';
+			*(current->param+2) = '!';
+			*(current->param+3) = '\0';
+		}
+	}
+
+	return actionList;
 }
 
 // =================================================================== eof ==
