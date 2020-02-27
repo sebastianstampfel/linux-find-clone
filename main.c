@@ -54,7 +54,7 @@ typedef struct action{
 // ------------------------------------------------------------- functions --
 int do_dir(const char *dir_name);
 int do_file(const char * file_name);
-ACTION *parse_params(void);
+int parse_params(int argc, const char *argv[], ACTION *listHead, char *startDir);
 
 //*
 // \brief The most minimalistic C program
@@ -82,18 +82,22 @@ int main(int argc, const char *argv[])
 	}
 
 
-	do_dir(".");
+	//do_dir(".");
 
-	ACTION *list = parse_params();
+	ACTION *listHead = NULL;
+	char startdir[3] = "";
+	if(parse_params(argc, argv, listHead, startdir) != 0){
+		return EXIT_FAILURE;
+	}
 
-	ACTION *current = list;
+	ACTION *current = listHead;
 	int i = 0;
 	while(current->type != -1){
 		printf("Element %d Type: %d\n", i, current->type);
 		printf("Element %d Param: %s\n", i, current->param);
 
 		i++;
-		current = list+i;
+		current = listHead+i;
 	}
 	/* DIR *root = opendir(".");
 	struct dirent *rootDir = readdir(root);
@@ -223,11 +227,53 @@ int do_file(const char * file_name){
 	return 0;
 }
 
-ACTION *parse_params(){
-	ACTION *actionList = calloc(3, sizeof(ACTION));
+int parse_params(int argc, const char *argv[], ACTION *listHead, char *startDir){
+	listHead = calloc(1, sizeof(ACTION));
+	ACTION *currentAction = listHead;
+
+	if(startDir == NULL){
+		// do smthg
+	}
+
+	if(argc <= 1){
+		fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
+		return 1;
+	} else {
+		if(strcmp(argv[1], "./") == 0){
+			startDir = calloc(2, sizeof(char));
+			*startDir = '.';
+			*(startDir + 1) = '\0';
+		} else {
+			startDir = calloc(strlen(argv[1]), sizeof(char));
+			strcpy(startDir, argv[1]);
+		}
+
+		for(int i = 2; i < argc; i ++){
+			currentAction = listHead + (i - 2);
+
+			if(strcmp(argv[i], "-user") == 0){
+				currentAction->type = USER;
+				currentAction->param = calloc(strlen(argv[i + 1]), sizeof(char));
+				strcpy(currentAction->param, argv[i + 1]);
+				i++;
+			} else if(strcmp(argv[i], "-name") == 0){
+				currentAction->type = NAME;
+				currentAction->param = calloc(strlen(argv[i + 1]), sizeof(char));
+				strcpy(currentAction->param, argv[i + 1]);
+				i++;
+			} else if(strcmp(argv[i], "-type") == 0){
+				currentAction->type = NAME;
+				currentAction->param = calloc(strlen(argv[i + 1]), sizeof(char));
+				strcpy(currentAction->param, argv[i + 1]);
+				i++;
+			}
+		}
+	}
+	
+	
 
 	for(int i = 0; i < 3; i++){
-		ACTION *current = actionList + i;
+		ACTION *current = listHead + i;
 		if(i == 2){
 			current->type = -1;
 		} else {
@@ -240,7 +286,7 @@ ACTION *parse_params(){
 		}
 	}
 
-	return actionList;
+	return 0;
 }
 
 // =================================================================== eof ==
