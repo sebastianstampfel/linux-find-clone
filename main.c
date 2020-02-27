@@ -47,6 +47,7 @@ typedef struct action{
 	int type;
 	char *param;
 	struct action *next;
+	struct action *prev;
 } ACTION;
 
 // --------------------------------------------------------------- globals --
@@ -73,26 +74,27 @@ int main(int argc, const char *argv[])
 	argc = argc;
 	argv = argv;
 
-	if (printf("Hello world!\n") < 0) {
+	/* if (printf("Hello world!\n") < 0) {
 		error(1, errno, "printf() failed");
-	}
+	} */
 	
-	for(int i = 0; i < argc; i++){
+	/* for(int i = 0; i < argc; i++){
 		printf("%s\n", argv[i]);
-	}
+	} */
 
 
 	//do_dir(".");
 
-	ACTION *listHead = NULL;
+	ACTION *listHead = calloc(1, sizeof(ACTION));
+	listHead->prev = NULL;
 	char startdir[3] = "";
-	if(parse_params(argc, argv, listHead, startdir) != 0){
+	if(parse_params(argc, argv, listHead, startdir) != 0){	
 		return EXIT_FAILURE;
 	}
 
 	ACTION *current = listHead;
 	int i = 0;
-	while(current->type != -1){
+	while(current->next != NULL){
 		printf("Element %d Type: %d\n", i, current->type);
 		printf("Element %d Param: %s\n", i, current->param);
 
@@ -228,12 +230,6 @@ int do_file(const char * file_name){
 }
 
 int parse_params(int argc, const char *argv[], ACTION *listHead, char *startDir){
-	listHead = calloc(1, sizeof(ACTION));
-	ACTION *currentAction = listHead;
-
-	if(startDir == NULL){
-		// do smthg
-	}
 
 	if(argc <= 1){
 		fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
@@ -249,8 +245,16 @@ int parse_params(int argc, const char *argv[], ACTION *listHead, char *startDir)
 		}
 
 		for(int i = 2; i < argc; i ++){
-			currentAction = listHead + (i - 2);
-
+			const int currentIndex = i - 2;
+			ACTION *currentAction = listHead + currentIndex;
+			currentAction = calloc(1, sizeof(ACTION));
+			if(currentIndex > 0){
+				ACTION *prevAction = listHead + (currentIndex - 1);
+				currentAction->prev = prevAction;
+				currentAction->next = NULL;
+				prevAction->next = currentAction;
+			}
+			
 			if(strcmp(argv[i], "-user") == 0){
 				currentAction->type = USER;
 				currentAction->param = calloc(strlen(argv[i + 1]), sizeof(char));
@@ -262,27 +266,31 @@ int parse_params(int argc, const char *argv[], ACTION *listHead, char *startDir)
 				strcpy(currentAction->param, argv[i + 1]);
 				i++;
 			} else if(strcmp(argv[i], "-type") == 0){
-				currentAction->type = NAME;
-				currentAction->param = calloc(strlen(argv[i + 1]), sizeof(char));
+				currentAction->type = TYPE;
+				currentAction->param = calloc(2, sizeof(char));
 				strcpy(currentAction->param, argv[i + 1]);
 				i++;
+			} else if(strcmp(argv[i], "-print") == 0){
+				currentAction->type = PRINT;
+				currentAction->param = NULL;
+			} else if(strcmp(argv[i], "-ls") == 0){
+				currentAction->type = LS;
+				currentAction->param = NULL;
+			} else if(strcmp(argv[i], "-nouser") == 0){
+				currentAction->type = NOUSER;
+				currentAction->param = NULL;
+			} else if(strcmp(argv[i], "-nouser") == 0){
+				currentAction->type = NOUSER;
+				currentAction->param = NULL;
+			} else if(strcmp(argv[i], "-path") == 0){
+				currentAction->type = PATH;
+				currentAction->param = calloc(2, sizeof(char));
+				strcpy(currentAction->param, argv[i + 1]);
+				i++;
+			} else {
+				fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
+				return 1;
 			}
-		}
-	}
-	
-	
-
-	for(int i = 0; i < 3; i++){
-		ACTION *current = listHead + i;
-		if(i == 2){
-			current->type = -1;
-		} else {
-			current->type = USER + i;
-			current->param = calloc(10, sizeof(char));
-			*(current->param) = 'H';
-			*(current->param+1) = 'i';
-			*(current->param+2) = '!';
-			*(current->param+3) = '\0';
 		}
 	}
 

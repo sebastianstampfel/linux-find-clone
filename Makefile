@@ -16,6 +16,7 @@
 
 CC=gcc
 CFLAGS=-DDEBUG -Wall -pedantic -Werror -Wextra -Wstrict-prototypes -Wformat=2 -fno-common -ftrapv -g -O3 -std=gnu11
+CFLAGS-DEBUG=-DDEBUG -Wall -pedantic -Werror -Wextra -Wstrict-prototypes -Wformat=2 -fno-common -ftrapv -g -std=gnu11
 CP=cp
 CD=cd
 MV=mv
@@ -42,6 +43,9 @@ all: myfind-grp11
 
 myfind-grp11: $(OBJECTS)
 	$(CC) $(CFLAGS) -o "$@" "$^"
+
+debug: $(OBJECTS)
+	$(CC) $(CFLAGS-DEBUG) -o "$@" "$^"
 
 .PRECIOUS: %.tex
 
