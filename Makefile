@@ -23,7 +23,7 @@ MV=mv
 GREP=grep
 DOXYGEN=doxygen
 
-OBJECTS=main.o
+OBJECTS=main.o action.o action_ls.o action_name.o action_nouser.o action_path.o action_type.o action_user.o
 
 EXCLUDE_PATTERN=footrulewidth
 
@@ -42,7 +42,7 @@ EXCLUDE_PATTERN=footrulewidth
 all: myfind-grp11
 
 myfind-grp11: $(OBJECTS)
-	$(CC) $(CFLAGS) -o "$@" "$^"
+	$(CC) $(CFLAGS) -o "$@" $^
 
 debug: $(OBJECTS)
 	$(CC) $(CFLAGS-DEBUG) -o "$@" "$^"
