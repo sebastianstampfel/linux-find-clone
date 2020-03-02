@@ -43,9 +43,9 @@ int FLAG_PRINT_ONLY = 1;
 int FLAG_STD_DIRS_PRINTED = 0;
 
 // ------------------------------------------------------------- functions --
-int do_dir(const char *dir_name);
-int do_file(const char * file_name);
-int parse_params(int argc, const char *argv[], ACTION *listHead, char **startDir);
+int doDir(char *dir_name, ACTION *listHead);
+int doFile(char * fileName, ACTION *listHead);
+int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
 ACTION *addListEntry(ACTION *listHead, int type, const char *params);
 void cleanupList(ACTION *listHead);
 
@@ -62,85 +62,85 @@ int main(int argc, const char *argv[])
     listHead->prev = NULL;
     listHead->next = NULL;
     char *startdir;
-    if(parse_params(argc, argv, listHead, &startdir) != 0){
+    if(parseParams(argc, argv, listHead, &startdir) != 0){
         error(0, errno, "%s: Error while parsing params.\n", argv[0]);
         cleanupList(listHead);
         exit(EXIT_FAILURE);
     }
 
-    do_dir(startdir);
+    doDir(startdir, listHead);
 
     cleanupList(listHead);
     free(startdir);
     return 0;
 }
 
-int do_dir(const char *dir_name){
-    DIR *dir_stream = opendir(dir_name);
-    if(dir_stream == NULL){
+int doDir(char *dirName, ACTION *listHead){
+    DIR *dirStream = opendir(dirName);
+    if(dirStream == NULL){
         // Rest of error message is coming from errno
-        error(0, errno, "Directory %s", dir_name);
+        error(0, errno, "Directory %s", dirName);
         return 1;
     }
-    struct dirent *dir_content = readdir(dir_stream);
-    while(dir_content != NULL){
-        if(dir_content->d_type == DT_DIR){
+    struct dirent *dirContent = readdir(dirStream);
+    while(dirContent != NULL){
+        if(dirContent->d_type == DT_DIR){
             // Do not investigate on directories "." and ".."
-            if(strcmp(".", dir_content->d_name) == 0 || strcmp("..", dir_content->d_name) == 0){
+            if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
                 if(FLAG_STD_DIRS_PRINTED == 0){
-                    if(printf("%s\n", dir_content->d_name) < 0){
+                    if(printf("%s\n", dirContent->d_name) < 0){
                         return 1;
                     }
                     FLAG_STD_DIRS_PRINTED = 1;
                 }
             } else {
                 if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
-                    if(dir_name[0] == '/'){
-                        if(printf("%s\n", dir_content->d_name) < 0){
+                    if(dirName[0] == '/'){
+                        if(printf("%s\n", dirContent->d_name) < 0){
                             return 1;
                         }
                     } else {
-                        if(printf("%s/%s\n", dir_name, dir_content->d_name) < 0){
+                        if(printf("%s/%s\n", dirName, dirContent->d_name) < 0){
                             return 1;
                         }
                     }
 
                 }
-                int newPathLength = strlen(dir_name) + strlen(dir_content->d_name) + 2; // 2 = "/" + '\0'
+                int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
                 char *newPath = calloc(newPathLength, sizeof(char));
                 if(newPath == NULL){
                     error(1, errno, "Out of memory!");
                 }
-                if(strcat(newPath, dir_name) == NULL){
+                if(strcat(newPath, dirName) == NULL){
                     error(1, errno, "Out of memory!");
                     free(newPath);
                     break;
                 }
-                if(strcmp(dir_name, "/") != 0){
+                if(strcmp(dirName, "/") != 0){
                     if(strcat(newPath, "/") == NULL){
                         error(1, errno, "Out of memory!");
                         free(newPath);
                         break;
                     }
                 }
-                if(strcat(newPath, dir_content->d_name) == NULL){
+                if(strcat(newPath, dirContent->d_name) == NULL){
                     error(1, errno, "Out of memory!");
                     free(newPath);
                     break;
                 }
                 *(newPath + (newPathLength - 1)) = '\0';
-                do_dir(newPath);
+                doDir(newPath, listHead);
                 free(newPath);
             }
 
-        } else if(dir_content->d_type == DT_REG){
+        } else if(dirContent->d_type == DT_REG){
             //printf("%s, REG\n", dir_content->d_name);
-            int newPathLength = (strlen(dir_name) + strlen(dir_content->d_name))+2;
+            int newPathLength = (strlen(dirName) + strlen(dirContent->d_name))+2;
             char *filePath = calloc(newPathLength, sizeof(char));
             if(filePath == NULL){
                 error(1, errno, "Out of memory!");
             }
-            if(strcat(filePath, dir_name) == NULL){
+            if(strcat(filePath, dirName) == NULL){
                 error(1, errno, "Out of memory!");
                 free(filePath);
                 break;
@@ -150,41 +150,55 @@ int do_dir(const char *dir_name){
                 free(filePath);
                 break;
             }
-            if(strcat(filePath, dir_content->d_name) == NULL){
+            if(strcat(filePath, dirContent->d_name) == NULL){
                 error(1, errno, "Out of memory!");
                 free(filePath);
                 break;
             }
             *(filePath + newPathLength -1) = '\0';
-            do_file(filePath);
+            doFile(filePath, listHead);
             free(filePath);
-        } else if(dir_content->d_type == DT_UNKNOWN){
-            printf("%s, UNKOWN\n", dir_content->d_name);
+        } else if(dirContent->d_type == DT_UNKNOWN){
+            printf("%s, UNKOWN\n", dirContent->d_name);
         } else {
             // TODO: Still print to stdout!
-            printf("%s, VERY UNKNOWN TYPE\n", dir_content->d_name);
+            printf("%s, VERY UNKNOWN TYPE\n", dirContent->d_name);
         }
 
-        dir_content = readdir(dir_stream);
+        dirContent = readdir(dirStream);
     }
-    closedir(dir_stream);
+    closedir(dirStream);
 
     return 0;
 }
 
-int do_file(const char * file_name){
+int doFile(char  *fileName, ACTION *listHead){
     if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
-        if(printf("%s\n", file_name) < 0){
+        if(printf("%s\n", fileName) < 0){
             return 1;
         }
     } else {
+        // Iterate through action list and call function pointer
+        ACTION *current = listHead;
 
+        while(1){
+            int retVal = (*current->actionFunction)(fileName, current->param);
+            if(retVal != 0){
+                error(0, errno, "Something bad happened, idk what.");
+            }
+
+            if(current->next != NULL){
+                current = current->next;
+            } else {
+                break;
+            }
+        }
     }
 
     return 0;
 }
 
-int parse_params(int argc, const char *argv[], ACTION *listHead, char **startDir){
+int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
 
     if(argc <= 1){
         fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
@@ -269,7 +283,31 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
             if(currentEntry->param != NULL){
                 if(strcpy(currentEntry->param, params) == NULL){
                     return NULL;
-                };
+                }
+                switch(type) {
+                    case USER:
+                        currentEntry->actionFunction = &doActionUser;
+                        break;
+                    case NAME:
+                        currentEntry->actionFunction = &doActionName;
+                        break;
+                    case LS:
+                        currentEntry->actionFunction = &doActionLs;
+                        break;
+                    case NOUSER:
+                        currentEntry->actionFunction = &doActionNoUser;
+                        break;
+                    case TYPE:
+                        currentEntry->actionFunction = &doActionType;
+                        break;
+                    case PATH:
+                        currentEntry->actionFunction = &doActionPath;
+                        break;
+                    default:
+                        error(1, errno, "Unknown type!\n");;
+                        currentEntry->actionFunction = NULL;
+                        break;
+                }
                 return currentEntry;
             } else {
                 return NULL;
