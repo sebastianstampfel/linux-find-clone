@@ -1,4 +1,5 @@
 .vscode/
-myfind-bic11
+myfind-grp11
 doc/
 *.o
+cmake-build-debug/
