@@ -1,12 +1,14 @@
 //*
-// @file hello.c
-// Betriebssysteme Hello World File.
-// Beispiel 0
+// @file main.c
+// Betriebssysteme MyFind-Main-File
+// Beispiel 1
 //
-// @author Bernd Petrovitsch <bernd.petrovitsch@technikum-wien.at>
-// @date 2005/02/22
+// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+// @author Milan Kollmann <ic19b058@technikum-wien.at>
+// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+// @date 2020/02/22
 //
-// @version 470 
+// @version 1
 //
 // @todo Test it more seriously and more complete.
 // @todo Review it for missing error checks.
