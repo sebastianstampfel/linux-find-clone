@@ -5,7 +5,7 @@
 #ifndef MYFIND_DEBUG_ACTION_NAME_H
 #define MYFIND_DEBUG_ACTION_NAME_H
 
-#include <stdio.h>
-int doActionName(char *fileName, char *params);
+int doActionName(char *filePath, char *params);
+char *fileNameFromPath(char *filePath);
 
 #endif //MYFIND_DEBUG_ACTION_NAME_H

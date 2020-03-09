@@ -43,6 +43,7 @@ int FLAG_LS = 0;
 int FLAG_NOUSER = 0;
 int FLAG_PRINT_ONLY = 1;
 int FLAG_STD_DIRS_PRINTED = 0;
+int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
 int doDir(char *dir_name, ACTION *listHead);
@@ -116,7 +117,7 @@ int doDir(char *dirName, ACTION *listHead){
 
             // Do not investigate on directories "." and ".."
             if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
-                if(FLAG_STD_DIRS_PRINTED == 0){
+                if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
                     if(printEntry(dirContent->d_name) != 0){
                         error(0, errno, "Error while printing to stdout.");
                         return 1;
@@ -188,11 +189,14 @@ int doFile(char  *fileName, ACTION *listHead){
     } else {
         // Iterate through action list and call function pointer
         ACTION *current = listHead;
+        int matchedActions = 0;
 
         while(1){
             int retVal = (*current->actionFunction)(fileName, current->param);
-            if(retVal != 0){
+            if(retVal < 0){
                 error(0, errno, "Something bad happened, idk what.");
+            } else if(retVal == 0){
+                matchedActions++;
             }
 
             if(current->next != NULL){
@@ -200,6 +204,10 @@ int doFile(char  *fileName, ACTION *listHead){
             } else {
                 break;
             }
+        }
+
+        if(matchedActions == ACTION_COUNT){
+            printEntry(fileName);
         }
     }
 
@@ -241,13 +249,15 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
                 if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-name") == 0){
                 if(addListEntry(listHead, NAME, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
                 if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
@@ -261,11 +271,13 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
                 FLAG_LS = 1;
             } else if(strcmp(argv[i], "-nouser") == 0){
                 FLAG_NOUSER = 1;
+                ACTION_COUNT++;
             } else if(strcmp(argv[i], "-path") == 0){
                 if(addListEntry(listHead, PATH, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
                 }
+                ACTION_COUNT++;
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -399,6 +411,7 @@ void cleanupList(ACTION *listHead){
 int printEntry(char *fileName){
     if(FLAG_LS == 1){
        // complex printout required
+       return 0;
     } else {
         if(printf("%s\n", fileName) < 0){
             return 1;
