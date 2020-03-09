@@ -50,6 +50,7 @@ int doFile(char * fileName, ACTION *listHead);
 int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
 ACTION *addListEntry(ACTION *listHead, int type, const char *params);
 void cleanupList(ACTION *listHead);
+int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
 {
@@ -87,50 +88,50 @@ int doDir(char *dirName, ACTION *listHead){
     struct dirent *dirContent = readdir(dirStream);
     while(dirContent != NULL){
         if(dirContent->d_type == DT_DIR){
+            int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
+            // VLA
+            char *newPath = calloc(newPathLength, sizeof(char));
+            if(newPath == NULL){
+                error(1, errno, "Out of memory!");
+            }
+            // evtl. snprintf()
+            if(strcat(newPath, dirName) == NULL){
+                error(1, errno, "Out of memory!");
+                free(newPath);
+                break;
+            }
+            if(strcmp(dirName, "/") != 0){
+                if(strcat(newPath, "/") == NULL){
+                    error(1, errno, "Out of memory!");
+                    free(newPath);
+                    break;
+                }
+            }
+            if(strcat(newPath, dirContent->d_name) == NULL){
+                error(1, errno, "Out of memory!");
+                free(newPath);
+                break;
+            }
+            *(newPath + (newPathLength - 1)) = '\0';
+
             // Do not investigate on directories "." and ".."
             if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
                 if(FLAG_STD_DIRS_PRINTED == 0){
-                    if(printf("%s\n", dirContent->d_name) < 0){
+                    if(printEntry(dirContent->d_name) != 0){
+                        error(0, errno, "Error while printing to stdout.");
                         return 1;
                     }
                     FLAG_STD_DIRS_PRINTED = 1;
                 }
             } else {
                 if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
-                    if(dirName[0] == '/'){
-                        if(printf("%s\n", dirContent->d_name) < 0){
-                            return 1;
-                        }
-                    } else {
-                        if(printf("%s/%s\n", dirName, dirContent->d_name) < 0){
-                            return 1;
-                        }
+                    if(printEntry(newPath) != 0){
+                        error(0, errno, "Error while printing to stdout.");
+                        return 1;
                     }
 
                 }
-                int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
-                char *newPath = calloc(newPathLength, sizeof(char));
-                if(newPath == NULL){
-                    error(1, errno, "Out of memory!");
-                }
-                if(strcat(newPath, dirName) == NULL){
-                    error(1, errno, "Out of memory!");
-                    free(newPath);
-                    break;
-                }
-                if(strcmp(dirName, "/") != 0){
-                    if(strcat(newPath, "/") == NULL){
-                        error(1, errno, "Out of memory!");
-                        free(newPath);
-                        break;
-                    }
-                }
-                if(strcat(newPath, dirContent->d_name) == NULL){
-                    error(1, errno, "Out of memory!");
-                    free(newPath);
-                    break;
-                }
-                *(newPath + (newPathLength - 1)) = '\0';
+
                 doDir(newPath, listHead);
                 free(newPath);
             }
@@ -167,8 +168,13 @@ int doDir(char *dirName, ACTION *listHead){
             printf("%s, VERY UNKNOWN TYPE\n", dirContent->d_name);
         }
 
+        // errno rücksetzen
         dirContent = readdir(dirStream);
     }
+
+    // errorhandling readdir => errno ansehen
+
+    // errorhandling oder kommentar warum nicht nötig
     closedir(dirStream);
 
     return 0;
@@ -207,7 +213,7 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
         return 1;
     } else {
         if(strcmp(argv[1], "./") == 0){
-            *startDir = calloc(2, sizeof(char));
+            *startDir = calloc(2, sizeof(char)); // warum calloc()? => array
             if(*startDir == NULL){
                 fprintf(stderr, "%s: Error while allocating memory.\n", argv[0]);
                 return 1;
@@ -222,7 +228,7 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
             }
             if(strcpy(*startDir, argv[1]) == NULL){
                 return 1;
-            };
+            }
         }
 
         if(argc == 2){
@@ -259,7 +265,7 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
                 if(addListEntry(listHead, PATH, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -386,6 +392,18 @@ void cleanupList(ACTION *listHead){
             free(current->param);
             free(current);
             break;
+        }
+    }
+}
+
+int printEntry(char *fileName){
+    if(FLAG_LS == 1){
+       // complex printout required
+    } else {
+        if(printf("%s\n", fileName) < 0){
+            return 1;
+        } else {
+            return 0;
         }
     }
 }

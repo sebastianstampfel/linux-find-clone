@@ -11,5 +11,6 @@ int doActionNoUser(char *fileName, char *params){
     // Prevent errors about unused params; Delete once function is implemented!
     fileName = fileName;
     params = params;
+
     return 1;
 }
