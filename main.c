@@ -46,12 +46,12 @@ int FLAG_STD_DIRS_PRINTED = 0;
 int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
-int doDir(char *dir_name, ACTION *listHead);
-int doFile(char * fileName, ACTION *listHead);
-int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
-ACTION *addListEntry(ACTION *listHead, int type, const char *params);
-void cleanupList(ACTION *listHead);
-int printEntry(char *fileName);
+static int doDir(char *dir_name, ACTION *listHead);
+static int doFile(char * fileName, ACTION *listHead);
+static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
+static ACTION *addListEntry(ACTION *listHead, int type, const char *params);
+static void cleanupList(ACTION *listHead);
+static int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
 {
@@ -72,6 +72,7 @@ int main(int argc, const char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Todo: Start with doFile
     doDir(startdir, listHead);
 
     cleanupList(listHead);
@@ -79,7 +80,7 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-int doDir(char *dirName, ACTION *listHead){
+static int doDir(char *dirName, ACTION *listHead){
     DIR *dirStream = opendir(dirName);
     if(dirStream == NULL){
         // Rest of error message is coming from errno
@@ -138,6 +139,7 @@ int doDir(char *dirName, ACTION *listHead){
             }
 
         } else if(dirContent->d_type == DT_REG){
+            // Todo: Abfrage mit lstat und mode_t!
             //printf("%s, REG\n", dir_content->d_name);
             int newPathLength = (strlen(dirName) + strlen(dirContent->d_name))+2;
             char *filePath = calloc(newPathLength, sizeof(char));
@@ -181,7 +183,7 @@ int doDir(char *dirName, ACTION *listHead){
     return 0;
 }
 
-int doFile(char  *fileName, ACTION *listHead){
+static int doFile(char  *fileName, ACTION *listHead){
     if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
         if(printf("%s\n", fileName) < 0){
             return 1;
@@ -214,7 +216,7 @@ int doFile(char  *fileName, ACTION *listHead){
     return 0;
 }
 
-int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
+static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
 
     if(argc <= 1){
         fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
@@ -290,7 +292,7 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
     return 0;
 }
 
-ACTION *addListEntry(ACTION *listHead, int type, const char *params){
+static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
     if(FLAG_PRINT_ONLY != 0){
         FLAG_PRINT_ONLY = 0;    // Action(s) different to print was provided as arguments
     }
@@ -392,7 +394,7 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
     }
 }
 
-void cleanupList(ACTION *listHead){
+static void cleanupList(ACTION *listHead){
     ACTION *current = listHead;
 
     while(1){
@@ -408,7 +410,7 @@ void cleanupList(ACTION *listHead){
     }
 }
 
-int printEntry(char *fileName){
+static int printEntry(char *fileName){
     if(FLAG_LS == 1){
        // complex printout required
        return 0;

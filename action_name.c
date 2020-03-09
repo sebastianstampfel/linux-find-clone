@@ -41,7 +41,12 @@ int doActionName(char *filePath, char *params){
 
 char *fileNameFromPath(char *filePath){
     char *path = calloc(strlen(filePath)+1, sizeof(char));
-    strcpy(path, filePath);
+    if(path != NULL){
+        if(strcpy(path, filePath) == NULL){
+            return NULL;
+        }
+    }
+
     char *p = strtok(path, "/");
     char *retVal = p;
 
@@ -49,6 +54,7 @@ char *fileNameFromPath(char *filePath){
         retVal = p;
         p = strtok(NULL, "/");
     }
+    free(path);
 
     if(retVal != NULL){
         return retVal;
