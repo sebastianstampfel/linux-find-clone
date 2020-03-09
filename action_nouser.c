@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <error.h>
+#include <pwd.h>
 
 /*
  * TODO: Implement!
