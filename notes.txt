@@ -1,0 +1,3 @@
+- PATH can return folders
+- NAME can return folders
+- USER can return folders
