@@ -5,6 +5,6 @@
 #ifndef MYFIND_DEBUG_ACTION_PATH_H
 #define MYFIND_DEBUG_ACTION_PATH_H
 
-int doActionPath(char *fileName, char *params);
+int doActionPath(char *filePath, char *params);
 
 #endif //MYFIND_DEBUG_ACTION_PATH_H
