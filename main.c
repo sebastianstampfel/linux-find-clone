@@ -53,7 +53,15 @@ void cleanupList(ACTION *listHead);
 
 int main(int argc, const char *argv[])
 {
+    /*
+    int retvalue = doActionUser("/Dokumente/betriebssysteme/testdic", "milan");
+
+    retvalue = retvalue;
+    argc = argc;
+    argv = argv;
+    */
     // prevent warnings regarding unused params
+    
     argc = argc;
     argv = argv;
 
@@ -74,6 +82,7 @@ int main(int argc, const char *argv[])
 
     cleanupList(listHead);
     free(startdir);
+    
     return 0;
 }
 

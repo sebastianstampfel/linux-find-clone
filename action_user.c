@@ -4,11 +4,67 @@
 
 #include "action_user.h"
 
+
 // TODO: Implement
 int doActionUser(char *fileName, char *params){
-    // Prevent errors about unused params; Delete once function is implemented!
-    fileName = fileName;
-    params = params;
+    int retValue = 0;
+    if(checkPWFile(params) != 0){
+        fprintf(stderr, "user: \"%s\" does not exist\n", params);
+        exit(EXIT_FAILURE);
+    }
+    else{
+        struct stat sb = {0};
+        errno = 0; 
+        if(lstat(fileName, &sb) == -1){
+            fprintf(stderr, "Something bad happened while using lstat():\n%s\n", strerror(errno));
+            exit(EXIT_FAILURE);
+        }
+        else{
+            long file_uid = sb.st_uid;
+            char *name = getUser(file_uid);    
+            if(strcmp(params, name) != 0){
+                long uid = -1;
+                if(sscanf(params, "%ld", &uid) == 1){
+                    if(uid != (long)sb.st_uid){
+                        retValue = 1; 
+                    }
+                }
+                else{
+                    retValue = 1;
+                }
+            }
+        }
+    }
+    if(retValue == 0){
+        printf("%s\n", fileName);
+    }
     // ------------------------------------------------------------------------
-    return 1;
+    return retValue;
 }
+
+int checkPWFile(char *params){
+    int retValue = 0;
+    if(getpwnam(params) == NULL){
+        long uid = -1;
+        if(sscanf(params, "%ld", &uid) == 1){
+            if(getpwuid((uid_t)uid) == NULL){
+                retValue = 1;
+            }
+        }
+        else{
+            retValue = 1;
+        }
+    }
+    return retValue;
+}
+
+char* getUser(long uid){
+    char *retValue = ""; 
+    struct passwd *pwd = getpwuid((uid_t)uid);
+    if(pwd != NULL){
+        retValue = pwd->pw_name;
+    }
+    return retValue; 
+}
+
+
