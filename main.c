@@ -187,6 +187,8 @@ int doFile(char  *fileName, ACTION *listHead){
             int retVal = (*current->actionFunction)(fileName, current->param);
             if(retVal != 0){
                 error(0, errno, "Something bad happened, idk what.");
+            } else {
+                printf("KAJWKWJDJAD\n");
             }
 
             if(current->next != NULL){
@@ -247,19 +249,22 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
                 if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
                 FLAG_PRINT = 1;
             } else if(strcmp(argv[i], "-ls") == 0){
                 FLAG_LS = 1;
             } else if(strcmp(argv[i], "-nouser") == 0){
-                FLAG_NOUSER = 1;
+                if(addListEntry(listHead, NOUSER, NULL) == NULL){
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    break;
+                }
             } else if(strcmp(argv[i], "-path") == 0){
                 if(addListEntry(listHead, PATH, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -280,12 +285,20 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
 
     if(currentEntry != NULL && currentEntry->prev == NULL && currentEntry->next == NULL && currentEntry->param == NULL){
         currentEntry->type = type;
-        if(params != NULL){
-            currentEntry->param = calloc(strlen(params)+1, sizeof(char));
-            if(currentEntry->param != NULL){
-                if(strcpy(currentEntry->param, params) == NULL){
-                    return NULL;
+        if(params != NULL || type == NOUSER){
+            if(type == NOUSER){
+                currentEntry->param = NULL;
+            } else {
+                currentEntry->param = calloc(strlen(params)+1, sizeof(char));
+            }
+
+            if(currentEntry->param != NULL || type == NOUSER){
+                if(type != NOUSER){
+                    if(strcpy(currentEntry->param, params) == NULL){
+                        return NULL;
+                    }
                 }
+
                 switch(type) {
                     case USER:
                         currentEntry->actionFunction = &doActionUser;
@@ -334,7 +347,7 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
         currentEntry->next->prev = currentEntry;
         currentEntry->next->next = NULL;
         currentEntry->next->type = type;
-        if (params != NULL) {
+        if (params != NULL && type != NOUSER) {
             currentEntry->next->param = calloc(strlen(params)+1, sizeof(char));
             if(currentEntry->next->param == NULL){
                 return NULL;
@@ -342,6 +355,8 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
             if(strcpy(currentEntry->next->param, params) == NULL){
                 return NULL;
             }
+        } else if(params == NULL && type == NOUSER){
+            currentEntry->next->param = NULL;
         } else {
             return NULL;
         }
