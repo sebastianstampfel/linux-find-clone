@@ -171,13 +171,14 @@ static int doDir(char *dirName, ACTION *listHead){
             printf("%s, VERY UNKNOWN TYPE\n", dirContent->d_name);
         }
 
-        // errno rücksetzen
+        // Todo: Check error handling
+        errno = 0;
         dirContent = readdir(dirStream);
+        if(dirContent == NULL){
+            error(0, errno, "Error while reading directory!");
+        }
     }
 
-    // errorhandling readdir => errno ansehen
-
-    // errorhandling oder kommentar warum nicht nötig
     closedir(dirStream);
 
     return 0;
