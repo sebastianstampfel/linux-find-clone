@@ -38,11 +38,36 @@
 // --------------------------------------------------------------- defines --
 // -------------------------------------------------------------- typedefs --
 // --------------------------------------------------------------- globals --
+
+/**
+ * @brief GLOBAL - Indicates if -print was supplied as a command line argument.
+ * 0: -print not supplied, 1: -print was supplied
+ */
 int FLAG_PRINT = 0;
+
+/**
+ * @brief GLOBAL - Indicates if -ls was supplied as a command line argument.
+ * 0: -ls not supplied; 1: -ls was supplied
+ * 
+ */
 int FLAG_LS = 0;
-int FLAG_NOUSER = 0;
+
+/**
+ * @brief GLOBAL - Indicates if -print was the only action supplied as a command line argument.
+ * 0: Actions other than -print were provided, 1: -print is only action supplied.
+ * Defaults to 1, in case no argument other than a start-path was provided.
+ */
 int FLAG_PRINT_ONLY = 1;
+
+/**
+ * @brief GLOBAL - Tracks if "." and ".." have been printed to stdout
+ * 0: not printed yet, 1: printed
+ */
 int FLAG_STD_DIRS_PRINTED = 0;
+
+/**
+ * @brief GLOBAL - Total count of actions supplied as command line arguments.
+ */
 int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
@@ -55,6 +80,7 @@ int ACTION_COUNT = 0;
  * @return int 0 on success, 1 on failure 
  */
 static int doDir(char *dir_name, ACTION *listHead);
+
 /**
  * @brief Function to handle a file on the filesystem.
  * 
@@ -64,6 +90,7 @@ static int doDir(char *dir_name, ACTION *listHead);
  * @return int 0 on success, 1 on failure 
  */
 static int doFile(char * fileName, ACTION *listHead);
+
 /**
  * @brief Parses params on application start
  * 
@@ -78,6 +105,7 @@ static int doFile(char * fileName, ACTION *listHead);
  * @return int 0 on success, 1 on failure
  */
 static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
+
 /**
  * @brief Adds an action to doubly linked list. Calles by parseParams().
  * 
@@ -88,7 +116,24 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
  * @return ACTION* Added action
  */
 static ACTION *addListEntry(ACTION *listHead, int type, const char *params);
+
+/**
+ * @brief Frees all memory alloc'd for list of actions
+ * 
+ * @param listHead Start of action list
+ * @see action
+ */
 static void cleanupList(ACTION *listHead);
+
+/**
+ * @brief Prints a certain file or directory to stdout
+ * 
+ * Behaviour is dependet on wether or not -ls was provided as a command
+ * line argument.
+ * 
+ * @param fileName Path to file to be printed
+ * @return int 0 on success, 1 on failure
+ */
 static int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
@@ -186,7 +231,10 @@ static int doDir(char *dirName, ACTION *listHead){
         }
     }
 
-    closedir(dirStream);
+    errno = 0;
+    if(closedir(dirStream) != 0){
+        error(0, errno, "Error closing directorystream");
+    }
 
     return 0;
 }
