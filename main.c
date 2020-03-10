@@ -138,10 +138,6 @@ static int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
 {
-
-    argc = argc;
-    argv = argv;
-
     ACTION *listHead = calloc(1, sizeof(ACTION));
     if(listHead == NULL){
         error(1, errno, "Out of memory!\n");
