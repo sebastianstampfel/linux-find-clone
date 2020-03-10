@@ -55,7 +55,7 @@ static int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
 {
-    // prevent warnings regarding unused params
+
     argc = argc;
     argv = argv;
 
@@ -77,8 +77,8 @@ int main(int argc, const char *argv[])
 
     cleanupList(listHead);
     free(startdir);
+
     exit(0);
-    //return 0;
 }
 
 static int doDir(char *dirName, ACTION *listHead){
