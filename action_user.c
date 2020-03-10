@@ -35,10 +35,7 @@ int doActionUser(char *fileName, char *params){
             }
         }
     }
-    if(retValue == 0){
-        printf("%s\n", fileName);
-    }
-    // ------------------------------------------------------------------------
+    
     return retValue;
 }
 
