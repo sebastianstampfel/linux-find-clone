@@ -46,9 +46,47 @@ int FLAG_STD_DIRS_PRINTED = 0;
 int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
+/**
+ * @brief Function to handle a directory on the filesystem.
+ * 
+ * @param dir_name Name of the directory
+ * @param listHead Head of doubly linked list of action struct
+ * @see action
+ * @return int 0 on success, 1 on failure 
+ */
 static int doDir(char *dir_name, ACTION *listHead);
+/**
+ * @brief Function to handle a file on the filesystem.
+ * 
+ * @param fileName Path to the file
+ * @param listHead Head of doubly linked list of action struct
+ * @see action
+ * @return int 0 on success, 1 on failure 
+ */
 static int doFile(char * fileName, ACTION *listHead);
+/**
+ * @brief Parses params on application start
+ * 
+ * Iterates through argument vector and creates a doubly linked
+ * list of actions.
+ * 
+ * @see action
+ * @param argc Argument count from main()
+ * @param argv Argument vector from main()
+ * @param listHead Head of doubly linked list of action struct
+ * @param startDir Directory to start at
+ * @return int 0 on success, 1 on failure
+ */
 static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
+/**
+ * @brief Adds an action to doubly linked list. Calles by parseParams().
+ * 
+ * @see parseParams
+ * @param listHead Head of doubly linked list
+ * @param type Type of action
+ * @param params Params of action
+ * @return ACTION* Added action
+ */
 static ACTION *addListEntry(ACTION *listHead, int type, const char *params);
 static void cleanupList(ACTION *listHead);
 static int printEntry(char *fileName);
