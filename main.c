@@ -43,24 +43,18 @@ int FLAG_LS = 0;
 int FLAG_NOUSER = 0;
 int FLAG_PRINT_ONLY = 1;
 int FLAG_STD_DIRS_PRINTED = 0;
+int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
-int doDir(char *dir_name, ACTION *listHead);
-int doFile(char * fileName, ACTION *listHead);
-int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
-ACTION *addListEntry(ACTION *listHead, int type, const char *params);
-void cleanupList(ACTION *listHead);
+static int doDir(char *dir_name, ACTION *listHead);
+static int doFile(char * fileName, ACTION *listHead);
+static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
+static ACTION *addListEntry(ACTION *listHead, int type, const char *params);
+static void cleanupList(ACTION *listHead);
+static int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
 {
-    /*
-    int retvalue = doActionUser("/Dokumente/betriebssysteme/testdic", "milan");
-
-    retvalue = retvalue;
-    argc = argc;
-    argv = argv;
-    */
-    // prevent warnings regarding unused params
     
     argc = argc;
     argv = argv;
@@ -78,15 +72,16 @@ int main(int argc, const char *argv[])
         exit(EXIT_FAILURE);
     }
 
+    // Todo: Start with doFile
     doDir(startdir, listHead);
 
     cleanupList(listHead);
     free(startdir);
-    
-    return 0;
+
+    exit(0);
 }
 
-int doDir(char *dirName, ACTION *listHead){
+static int doDir(char *dirName, ACTION *listHead){
     DIR *dirStream = opendir(dirName);
     if(dirStream == NULL){
         // Rest of error message is coming from errno
@@ -96,79 +91,48 @@ int doDir(char *dirName, ACTION *listHead){
     struct dirent *dirContent = readdir(dirStream);
     while(dirContent != NULL){
         if(dirContent->d_type == DT_DIR){
+            int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
+            char newPath[newPathLength]; // Variable length array
+
+            if(strcmp(dirName, "/") != 0){
+                if(snprintf(newPath, newPathLength, "%s/%s", dirName, dirContent->d_name) >= newPathLength){
+                    // output truncated
+                    error(0, errno, "Error while building new directory path");
+                    break;
+                }
+            }
+
             // Do not investigate on directories "." and ".."
             if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
-                if(FLAG_STD_DIRS_PRINTED == 0){
-                    if(printf("%s\n", dirContent->d_name) < 0){
+                if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
+                    if(printEntry(dirContent->d_name) != 0){
+                        error(0, errno, "Error while printing to stdout.");
                         return 1;
                     }
                     FLAG_STD_DIRS_PRINTED = 1;
                 }
             } else {
                 if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
-                    if(dirName[0] == '/'){
-                        if(printf("%s\n", dirContent->d_name) < 0){
-                            return 1;
-                        }
-                    } else {
-                        if(printf("%s/%s\n", dirName, dirContent->d_name) < 0){
-                            return 1;
-                        }
+                    if(printEntry(newPath) != 0){
+                        error(0, errno, "Error while printing to stdout.");
+                        return 1;
                     }
 
                 }
-                int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
-                char *newPath = calloc(newPathLength, sizeof(char));
-                if(newPath == NULL){
-                    error(1, errno, "Out of memory!");
-                }
-                if(strcat(newPath, dirName) == NULL){
-                    error(1, errno, "Out of memory!");
-                    free(newPath);
-                    break;
-                }
-                if(strcmp(dirName, "/") != 0){
-                    if(strcat(newPath, "/") == NULL){
-                        error(1, errno, "Out of memory!");
-                        free(newPath);
-                        break;
-                    }
-                }
-                if(strcat(newPath, dirContent->d_name) == NULL){
-                    error(1, errno, "Out of memory!");
-                    free(newPath);
-                    break;
-                }
-                *(newPath + (newPathLength - 1)) = '\0';
+
                 doDir(newPath, listHead);
-                free(newPath);
             }
 
         } else if(dirContent->d_type == DT_REG){
-            //printf("%s, REG\n", dir_content->d_name);
+            // Todo: Abfrage mit lstat und mode_t!
             int newPathLength = (strlen(dirName) + strlen(dirContent->d_name))+2;
-            char *filePath = calloc(newPathLength, sizeof(char));
-            if(filePath == NULL){
-                error(1, errno, "Out of memory!");
-            }
-            if(strcat(filePath, dirName) == NULL){
-                error(1, errno, "Out of memory!");
-                free(filePath);
+            char filePath[newPathLength];
+            if(snprintf(filePath, newPathLength, "%s/%s", dirName, dirContent->d_name) >= newPathLength){
+                // output truncated
+                error(0, errno, "Error building new filepath");
                 break;
             }
-            if(strcat(filePath, "/") == NULL){
-                error(1, errno, "Out of memory!");
-                free(filePath);
-                break;
-            }
-            if(strcat(filePath, dirContent->d_name) == NULL){
-                error(1, errno, "Out of memory!");
-                free(filePath);
-                break;
-            }
-            *(filePath + newPathLength -1) = '\0';
             doFile(filePath, listHead);
-            free(filePath);
         } else if(dirContent->d_type == DT_UNKNOWN){
             printf("%s, UNKOWN\n", dirContent->d_name);
         } else {
@@ -176,14 +140,20 @@ int doDir(char *dirName, ACTION *listHead){
             printf("%s, VERY UNKNOWN TYPE\n", dirContent->d_name);
         }
 
+        // Todo: Check error handling
+        errno = 0;
         dirContent = readdir(dirStream);
+        if(dirContent == NULL && errno != 0){
+            error(0, errno, "Error while reading directory!");
+        }
     }
+
     closedir(dirStream);
 
     return 0;
 }
 
-int doFile(char  *fileName, ACTION *listHead){
+static int doFile(char  *fileName, ACTION *listHead){
     if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
         if(printf("%s\n", fileName) < 0){
             return 1;
@@ -191,11 +161,14 @@ int doFile(char  *fileName, ACTION *listHead){
     } else {
         // Iterate through action list and call function pointer
         ACTION *current = listHead;
+        int matchedActions = 0;
 
         while(1){
             int retVal = (*current->actionFunction)(fileName, current->param);
-            if(retVal != 0){
+            if(retVal < 0){
                 error(0, errno, "Something bad happened, idk what.");
+            } else if(retVal == 0){
+                matchedActions++;
             }
 
             if(current->next != NULL){
@@ -204,19 +177,23 @@ int doFile(char  *fileName, ACTION *listHead){
                 break;
             }
         }
+
+        if(matchedActions == ACTION_COUNT){
+            printEntry(fileName);
+        }
     }
 
     return 0;
 }
 
-int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
+static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
 
     if(argc <= 1){
         fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
         return 1;
     } else {
         if(strcmp(argv[1], "./") == 0){
-            *startDir = calloc(2, sizeof(char));
+            *startDir = calloc(2, sizeof(char)); // warum calloc()? => array
             if(*startDir == NULL){
                 fprintf(stderr, "%s: Error while allocating memory.\n", argv[0]);
                 return 1;
@@ -231,7 +208,7 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
             }
             if(strcpy(*startDir, argv[1]) == NULL){
                 return 1;
-            };
+            }
         }
 
         if(argc == 2){
@@ -244,31 +221,38 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
                 if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-name") == 0){
                 if(addListEntry(listHead, NAME, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
                 if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
                 FLAG_PRINT = 1;
             } else if(strcmp(argv[i], "-ls") == 0){
                 FLAG_LS = 1;
             } else if(strcmp(argv[i], "-nouser") == 0){
-                FLAG_NOUSER = 1;
+                if(addListEntry(listHead, NOUSER, NULL) == NULL){
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    break;
+                }
+                ACTION_COUNT++;
             } else if(strcmp(argv[i], "-path") == 0){
                 if(addListEntry(listHead, PATH, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     break;
-                };
+                }
+                ACTION_COUNT++;
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -281,7 +265,7 @@ int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir)
     return 0;
 }
 
-ACTION *addListEntry(ACTION *listHead, int type, const char *params){
+static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
     if(FLAG_PRINT_ONLY != 0){
         FLAG_PRINT_ONLY = 0;    // Action(s) different to print was provided as arguments
     }
@@ -289,12 +273,20 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
 
     if(currentEntry != NULL && currentEntry->prev == NULL && currentEntry->next == NULL && currentEntry->param == NULL){
         currentEntry->type = type;
-        if(params != NULL){
-            currentEntry->param = calloc(strlen(params)+1, sizeof(char));
-            if(currentEntry->param != NULL){
-                if(strcpy(currentEntry->param, params) == NULL){
-                    return NULL;
+        if(params != NULL || type == NOUSER){
+            if(type == NOUSER){
+                currentEntry->param = NULL;
+            } else {
+                currentEntry->param = calloc(strlen(params)+1, sizeof(char));
+            }
+
+            if(currentEntry->param != NULL || type == NOUSER){
+                if(type != NOUSER){
+                    if(strcpy(currentEntry->param, params) == NULL){
+                        return NULL;
+                    }
                 }
+
                 switch(type) {
                     case USER:
                         currentEntry->actionFunction = &doActionUser;
@@ -343,7 +335,7 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
         currentEntry->next->prev = currentEntry;
         currentEntry->next->next = NULL;
         currentEntry->next->type = type;
-        if (params != NULL) {
+        if (params != NULL && type != NOUSER) {
             currentEntry->next->param = calloc(strlen(params)+1, sizeof(char));
             if(currentEntry->next->param == NULL){
                 return NULL;
@@ -351,6 +343,8 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
             if(strcpy(currentEntry->next->param, params) == NULL){
                 return NULL;
             }
+        } else if(params == NULL && type == NOUSER){
+            currentEntry->next->param = NULL;
         } else {
             return NULL;
         }
@@ -383,7 +377,7 @@ ACTION *addListEntry(ACTION *listHead, int type, const char *params){
     }
 }
 
-void cleanupList(ACTION *listHead){
+static void cleanupList(ACTION *listHead){
     ACTION *current = listHead;
 
     while(1){
@@ -395,6 +389,19 @@ void cleanupList(ACTION *listHead){
             free(current->param);
             free(current);
             break;
+        }
+    }
+}
+
+static int printEntry(char *fileName){
+    if(FLAG_LS == 1){
+       // complex printout required
+       return 0;
+    } else {
+        if(printf("%s\n", fileName) < 0){
+            return 1;
+        } else {
+            return 0;
         }
     }
 }
