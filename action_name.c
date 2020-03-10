@@ -25,16 +25,20 @@ int doActionName(char *filePath, char *params){
         switch(result){
             case 0:
                 // match
+                free(fileName);
                 return 0;
             case FNM_NOMATCH:
                 // no match
+                free(fileName);
                 return 1;
             default:
                 // error
+                free(fileName);
                 error(0, errno, "Error while checking for name action");
                 return -1;
         }
     } else {
+        free(fileName);
         return -1;
     }
 }
@@ -48,10 +52,11 @@ char *fileNameFromPath(char *filePath){
     }
 
     char *p = strtok(path, "/");
-    char *retVal = p;
+    char *retVal = calloc(strlen(filePath), sizeof(char));
 
     while(p != NULL) {
-        retVal = p;
+        // hello
+        strcpy(retVal, p);
         p = strtok(NULL, "/");
     }
     free(path);

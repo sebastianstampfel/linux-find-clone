@@ -77,7 +77,8 @@ int main(int argc, const char *argv[])
 
     cleanupList(listHead);
     free(startdir);
-    return 0;
+    exit(0);
+    //return 0;
 }
 
 static int doDir(char *dirName, ACTION *listHead){
@@ -91,30 +92,15 @@ static int doDir(char *dirName, ACTION *listHead){
     while(dirContent != NULL){
         if(dirContent->d_type == DT_DIR){
             int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
-            // VLA
-            char *newPath = calloc(newPathLength, sizeof(char));
-            if(newPath == NULL){
-                error(1, errno, "Out of memory!");
-            }
-            // evtl. snprintf()
-            if(strcat(newPath, dirName) == NULL){
-                error(1, errno, "Out of memory!");
-                free(newPath);
-                break;
-            }
+            char newPath[newPathLength]; // Variable length array
+
             if(strcmp(dirName, "/") != 0){
-                if(strcat(newPath, "/") == NULL){
-                    error(1, errno, "Out of memory!");
-                    free(newPath);
+                if(snprintf(newPath, newPathLength, "%s/%s", dirName, dirContent->d_name) >= newPathLength){
+                    // output truncated
+                    error(0, errno, "Error while building new directory path");
                     break;
                 }
             }
-            if(strcat(newPath, dirContent->d_name) == NULL){
-                error(1, errno, "Out of memory!");
-                free(newPath);
-                break;
-            }
-            *(newPath + (newPathLength - 1)) = '\0';
 
             // Do not investigate on directories "." and ".."
             if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
@@ -135,35 +121,18 @@ static int doDir(char *dirName, ACTION *listHead){
                 }
 
                 doDir(newPath, listHead);
-                free(newPath);
             }
 
         } else if(dirContent->d_type == DT_REG){
             // Todo: Abfrage mit lstat und mode_t!
-            //printf("%s, REG\n", dir_content->d_name);
             int newPathLength = (strlen(dirName) + strlen(dirContent->d_name))+2;
-            char *filePath = calloc(newPathLength, sizeof(char));
-            if(filePath == NULL){
-                error(1, errno, "Out of memory!");
-            }
-            if(strcat(filePath, dirName) == NULL){
-                error(1, errno, "Out of memory!");
-                free(filePath);
+            char filePath[newPathLength];
+            if(snprintf(filePath, newPathLength, "%s/%s", dirName, dirContent->d_name) >= newPathLength){
+                // output truncated
+                error(0, errno, "Error building new filepath");
                 break;
             }
-            if(strcat(filePath, "/") == NULL){
-                error(1, errno, "Out of memory!");
-                free(filePath);
-                break;
-            }
-            if(strcat(filePath, dirContent->d_name) == NULL){
-                error(1, errno, "Out of memory!");
-                free(filePath);
-                break;
-            }
-            *(filePath + newPathLength -1) = '\0';
             doFile(filePath, listHead);
-            free(filePath);
         } else if(dirContent->d_type == DT_UNKNOWN){
             printf("%s, UNKOWN\n", dirContent->d_name);
         } else {
@@ -174,7 +143,7 @@ static int doDir(char *dirName, ACTION *listHead){
         // Todo: Check error handling
         errno = 0;
         dirContent = readdir(dirStream);
-        if(dirContent == NULL){
+        if(dirContent == NULL && errno != 0){
             error(0, errno, "Error while reading directory!");
         }
     }
