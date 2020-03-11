@@ -156,7 +156,9 @@ int main(int argc, const char *argv[])
     if(parseParams(argc, argv, listHead, &startdir) != 0){
         error(0, errno, "%s: Error while parsing params.\n", argv[0]);
         cleanupList(listHead);
-        free(startdir);
+        if(startdir != NULL){
+            free(startdir);
+        }
         exit(EXIT_FAILURE);
     }
 
