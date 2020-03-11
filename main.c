@@ -156,6 +156,7 @@ int main(int argc, const char *argv[])
     if(parseParams(argc, argv, listHead, &startdir) != 0){
         error(0, errno, "%s: Error while parsing params.\n", argv[0]);
         cleanupList(listHead);
+        free(startdir);
         exit(EXIT_FAILURE);
     }
 
@@ -355,16 +356,18 @@ static int doFile(char  *fileName, ACTION *listHead){
 }
 
 static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
+    int returnValue = SUCCESS;
 
     if(argc <= 1){
         fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
-        return 1;
+        returnValue = CRITICAL;
     } else {
         if(strcmp(argv[1], "./") == 0){
             *startDir = calloc(2, sizeof(char)); // warum calloc()? => array
             if(*startDir == NULL){
                 fprintf(stderr, "%s: Error while allocating memory.\n", argv[0]);
-                return 1;
+                returnValue = CRITICAL;
+                goto EXIT_PARSEPARAMS;
             }
             **startDir = '.';
             *(*(startDir) + 1) = '\0';
@@ -372,22 +375,25 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
             *startDir = calloc(strlen(argv[1]) + 1, sizeof(char));
             if(*startDir == NULL){
                 fprintf(stderr, "%s: Error while allocating memory.\n", argv[0]);
-                return 1;
+                returnValue = CRITICAL;
+                goto EXIT_PARSEPARAMS;
             }
             if(strcpy(*startDir, argv[1]) == NULL){
-                return 1;
+                returnValue = CRITICAL;
+                goto EXIT_PARSEPARAMS;
             }
         }
 
         if(argc == 2){
             FLAG_PRINT = 1;
-            return 0;
+            goto EXIT_PARSEPARAMS;
         }
 
         for(int i = 2; i < argc; i ++){
             if(strcmp(argv[i], "-user") == 0){
                 if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
                 ACTION_COUNT++;
@@ -395,15 +401,49 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
             } else if(strcmp(argv[i], "-name") == 0){
                 if(addListEntry(listHead, NAME, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
-                if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
-                    fprintf(stderr, "Error while adding list entry!\n");
+                if(strlen(argv[i+1]) != 1){
+                    returnValue = CRITICAL;
+                    fprintf(stderr, "%s is not a valid parameter for -type!\n", argv[i+1]);
                     break;
+                } else {
+                    switch(*argv[i+1]){
+                        case 'b':
+                            break;
+                        case 'c':
+                            break;
+                        case 'd':
+                            break;
+                        case 'p':
+                            break;
+                        case 'f':
+                            break;
+                        case 'l':
+                            break;
+                        case 's':
+                            break;
+                        default:
+                            break;
+                    }
+
+                    if(*argv[i+1] == 'b' || *argv[i+1] == 'c' || *argv[i+1] == 'd' || *argv[i+1] == 'p' || *argv[i+1] == 'f' || *argv[i+1] == 'l' || *argv[i+1] == 's'){
+                        if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
+                            fprintf(stderr, "Error while adding list entry!\n");
+                            returnValue = CRITICAL;
+                            break;
+                        }
+                    } else {
+                        fprintf(stderr, "%s is not a valid parameter for -type!\n", argv[i+1]);
+                        returnValue = CRITICAL;
+                        break;
+                    }
                 }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
                 FLAG_PRINT = 1;
@@ -430,7 +470,8 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
         }
     }
 
-    return 0;
+    EXIT_PARSEPARAMS:
+    return returnValue;
 }
 
 static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
