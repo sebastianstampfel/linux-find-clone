@@ -11,7 +11,8 @@
             "program": "myfind-grp11",
             "args": [
                 ".",
-                "-print"
+                "-user",
+                "123-und-du-bist-raus"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

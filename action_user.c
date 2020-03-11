@@ -3,6 +3,7 @@
 //
 
 #include "action_user.h"
+#include <errno.h>
 
 
 // TODO: Implement
@@ -23,14 +24,36 @@ int doActionUser(char *fileName, char *params){
             long file_uid = sb.st_uid;
             char *name = getUser(file_uid);    
             if(strcmp(params, name) != 0){
-                long uid = -1;
-                if(sscanf(params, "%ld", &uid) == 1){
-                    if(uid != (long)sb.st_uid){
-                        retValue = 1; 
-                    }
-                }
-                else{
+
+//                long uid = -1;
+//                if(sscanf(params, "%ld", &uid) == 1){
+//                    if(uid != (long)sb.st_uid){
+//                        retValue = 1;
+//                    }
+//                }
+//                else{
+//                    retValue = 1;
+//                }
+
+                errno = 0;
+                char *ptr;
+                long uid =  strtol(params, &ptr, 10);
+
+                if(ptr == params){
+                    // total conversion fail
                     retValue = 1;
+                } else if(*ptr != '\0') {
+                    // incomplete conversion
+                    retValue = 1;
+                } else {
+                    if(errno){
+                        // overflow
+                        retValue = 1;
+                    } else {
+                        if(uid != (long)sb.st_uid){
+                            retValue = 1;
+                        }
+                    }
                 }
             }
         }
@@ -42,14 +65,25 @@ int doActionUser(char *fileName, char *params){
 int checkPWFile(char *params){
     int retValue = 0;
     if(getpwnam(params) == NULL){
-        long uid = -1;
-        if(sscanf(params, "%ld", &uid) == 1){
-            if(getpwuid((uid_t)uid) == NULL){
-                retValue = 1;
-            }
-        }
-        else{
+        errno = 0;
+        char *ptr;
+        long uid =  strtol(params, &ptr, 10);
+
+        if(ptr == params){
+            // total conversion fail
             retValue = 1;
+        } else if(*ptr != '\0') {
+            // incomplete conversion
+            retValue = 1;
+        } else {
+            if(errno){
+                // overflow
+                retValue = 1;
+            } else {
+                if(getpwuid((uid_t)uid) == NULL){
+                    retValue = 1;
+                }
+            }
         }
     }
     return retValue;
