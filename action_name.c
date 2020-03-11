@@ -14,12 +14,8 @@
  * TODO: Implement!
  */
 int doActionName(char *filePath, char *params){
-    // Prevent errors about unused params; Delete once function is implemented!
-    // filePath = filePath;
-    // params = params;
-    // ------------------------------------------------------------------------
     char *fileName = fileNameFromPath(filePath);
-    if(fileName != NULL){
+    if(fileName != NULL && params != NULL){
         errno = 0;
         int result = fnmatch(params, fileName, FNM_NOESCAPE | FNM_PERIOD);
         switch(result){

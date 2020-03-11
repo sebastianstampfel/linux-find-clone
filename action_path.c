@@ -14,9 +14,9 @@ int doActionPath(char *filePath, char *params){
     filePath = filePath;
     params = params;
     // ------------------------------------------------------------------------
-    if(filePath != NULL){
+    if(filePath != NULL && params != NULL){
         errno = 0;
-        int result = fnmatch(params, filePath, FNM_NOESCAPE | FNM_PERIOD);
+        int result = fnmatch(params, filePath, FNM_NOESCAPE);
         switch(result){
             case 0:
                 // match
@@ -32,6 +32,4 @@ int doActionPath(char *filePath, char *params){
     } else {
         return -1;
     }
-
-    return 1;
 }

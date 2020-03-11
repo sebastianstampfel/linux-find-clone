@@ -73,6 +73,9 @@ int ACTION_COUNT = 0;
 // ------------------------------------------------------------- functions --
 /**
  * @brief Function to handle a directory on the filesystem.
+ *
+ * Travels down the dir path until the end. Recursively calls
+ * itself if more dirs are foun.
  * 
  * @param dir_name Name of the directory
  * @param listHead Head of doubly linked list of action struct
@@ -151,8 +154,21 @@ int main(int argc, const char *argv[])
         exit(EXIT_FAILURE);
     }
 
-    // Todo: Start with doFile
-    doDir(startdir, listHead);
+    struct stat buf;
+    errno = 0;
+    if(lstat(startdir, &buf) == -1){
+        error(0, errno, "Error reading starting point");
+    }
+
+    // If user supplies a valid directory as starting point,
+    // travel down the dir path.
+    // Else, treat as a single file.
+    if(S_ISDIR(buf.st_mode) != 0){
+        doDir(startdir, listHead);
+    } else {
+        doFile(startdir, listHead);
+    }
+
 
     cleanupList(listHead);
     free(startdir);
@@ -167,21 +183,33 @@ static int doDir(char *dirName, ACTION *listHead){
         error(0, errno, "Directory %s", dirName);
         return 1;
     }
+
     struct dirent *dirContent = readdir(dirStream);
     while(dirContent != NULL){
-        if(dirContent->d_type == DT_DIR){
-            int newPathLength = strlen(dirName) + strlen(dirContent->d_name) + 2; // 2 = "/" + '\0'
-            char newPath[newPathLength]; // Variable length array
+        const int pathLength = strlen(dirName) + strlen(dirContent->d_name) + 2;
+        char fullPath[pathLength];
 
-            if(strcmp(dirName, "/") != 0){
-                if(snprintf(newPath, newPathLength, "%s/%s", dirName, dirContent->d_name) >= newPathLength){
-                    // output truncated
-                    error(0, errno, "Error while building new directory path");
-                    break;
-                }
+        if(strcmp(dirName, "/") != 0){
+            if(snprintf(fullPath, pathLength, "%s/%s", dirName, dirContent->d_name) >= pathLength){
+                // output truncated
+                error(0, errno, "Error while building new file path");
+                break;
             }
+        } else {
+            if(snprintf(fullPath, pathLength, "/%s", dirContent->d_name) >= pathLength){
+                // output truncated
+                error(0, errno, "Error while building new file path");
+                break;
+            }
+        }
 
-            // Do not investigate on directories "." and ".."
+        struct stat buf;
+        errno = 0;
+        if(lstat(fullPath, &buf) == -1){
+            error(0, errno, "Error reading starting point");
+        }
+
+        if(S_ISDIR(buf.st_mode) != 0){
             if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
                 if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
                     if(printEntry(dirContent->d_name) != 0){
@@ -192,31 +220,40 @@ static int doDir(char *dirName, ACTION *listHead){
                 }
             } else {
                 if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
-                    if(printEntry(newPath) != 0){
+                    if(printEntry(fullPath) != 0){
                         error(0, errno, "Error while printing to stdout.");
                         return 1;
                     }
 
+                } else {
+                    // do actions
+                    ACTION *current = listHead;
+                    int matchedActions = 0;
+
+                    while(1){
+                        int retVal = (*current->actionFunction)(fullPath, current->param);
+                        if(retVal < 0){
+                            error(0, errno, "Something bad happened, idk what.");
+                        } else if(retVal == 0){
+                            matchedActions++;
+                        }
+
+                        if(current->next != NULL){
+                            current = current->next;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if(matchedActions == ACTION_COUNT){
+                        printEntry(fullPath);
+                    }
                 }
 
-                doDir(newPath, listHead);
+                doDir(fullPath, listHead);
             }
-
-        } else if(dirContent->d_type == DT_REG){
-            // Todo: Abfrage mit lstat und mode_t!
-            int newPathLength = (strlen(dirName) + strlen(dirContent->d_name))+2;
-            char filePath[newPathLength];
-            if(snprintf(filePath, newPathLength, "%s/%s", dirName, dirContent->d_name) >= newPathLength){
-                // output truncated
-                error(0, errno, "Error building new filepath");
-                break;
-            }
-            doFile(filePath, listHead);
-        } else if(dirContent->d_type == DT_UNKNOWN){
-            printf("%s, UNKOWN\n", dirContent->d_name);
         } else {
-            // TODO: Still print to stdout!
-            printf("%s, VERY UNKNOWN TYPE\n", dirContent->d_name);
+            doFile(fullPath, listHead);
         }
 
         // Todo: Check error handling
