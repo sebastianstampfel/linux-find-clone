@@ -93,7 +93,7 @@ int parseTypeParams(char *params, TYPESTRUCT *typeList){
                 current->typeFunction = &isSocket;
                 break;
             default:
-                fprintf(stderr, "%s is an invalid parameter chain for -type!\n");
+                fprintf(stderr, "%s is an invalid parameter chain for -type!\n", params);
                 return -1;
         }
         p = strtok(NULL, ",");
