@@ -407,41 +407,10 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
-                if(strlen(argv[i+1]) != 1){
+                if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
+                    fprintf(stderr, "Error while adding list entry!\n");
                     returnValue = CRITICAL;
-                    fprintf(stderr, "%s is not a valid parameter for -type!\n", argv[i+1]);
                     break;
-                } else {
-                    switch(*argv[i+1]){
-                        case 'b':
-                            break;
-                        case 'c':
-                            break;
-                        case 'd':
-                            break;
-                        case 'p':
-                            break;
-                        case 'f':
-                            break;
-                        case 'l':
-                            break;
-                        case 's':
-                            break;
-                        default:
-                            break;
-                    }
-
-                    if(*argv[i+1] == 'b' || *argv[i+1] == 'c' || *argv[i+1] == 'd' || *argv[i+1] == 'p' || *argv[i+1] == 'f' || *argv[i+1] == 'l' || *argv[i+1] == 's'){
-                        if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
-                            fprintf(stderr, "Error while adding list entry!\n");
-                            returnValue = CRITICAL;
-                            break;
-                        }
-                    } else {
-                        fprintf(stderr, "%s is not a valid parameter for -type!\n", argv[i+1]);
-                        returnValue = CRITICAL;
-                        break;
-                    }
                 }
                 ACTION_COUNT++;
                 i++;
