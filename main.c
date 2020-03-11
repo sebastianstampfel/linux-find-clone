@@ -292,8 +292,6 @@ static int doDir(char *dirName, ACTION *listHead){
             }
         }
 
-        // Todo: Check error handling
-
         CONTINUE_DODIR:
         errno = 0;
         dirContent = readdir(dirStream);
@@ -321,7 +319,8 @@ static int doFile(char  *fileName, ACTION *listHead){
 
     if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
         if(printf("%s\n", fileName) < 0){
-            returnValue = 1;
+            fprintf(stderr, "Error printing to stdout()\n");
+            returnValue = WARNING;
         }
     } else {
         // Iterate through action list and call function pointer
@@ -345,7 +344,10 @@ static int doFile(char  *fileName, ACTION *listHead){
         }
 
         if(matchedActions == ACTION_COUNT){
-            printEntry(fileName);
+            const int retVal = printEntry(fileName);
+            if(retVal != SUCCESS){
+                returnValue = retVal;
+            }
         }
     }
 
@@ -562,12 +564,13 @@ static void cleanupList(ACTION *listHead){
 static int printEntry(char *fileName){
     if(FLAG_LS == 1){
        // complex printout required
-       return 0;
+       return SUCCESS;
     } else {
         if(printf("%s\n", fileName) < 0){
-            return 1;
+            fprintf(stderr, "Error printing to stdout()\n");
+            return WARNING;
         } else {
-            return 0;
+            return SUCCESS;
         }
     }
 }
