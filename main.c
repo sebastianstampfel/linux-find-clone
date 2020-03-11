@@ -36,6 +36,9 @@
 #include <unistd.h>
 
 // --------------------------------------------------------------- defines --
+#define SUCCESS 0
+#define WARNING 1
+#define CRITICAL -1
 // -------------------------------------------------------------- typedefs --
 // --------------------------------------------------------------- globals --
 
@@ -141,6 +144,8 @@ static int printEntry(char *fileName);
 
 int main(int argc, const char *argv[])
 {
+    int returnValue = SUCCESS;
+
     ACTION *listHead = calloc(1, sizeof(ACTION));
     if(listHead == NULL){
         error(1, errno, "Out of memory!\n");
@@ -164,7 +169,12 @@ int main(int argc, const char *argv[])
     // travel down the dir path.
     // Else, treat as a single file.
     if(S_ISDIR(buf.st_mode) != 0){
-        doDir(startdir, listHead);
+        if(doDir(startdir, listHead) == CRITICAL){
+            returnValue = CRITICAL;
+            cleanupList(listHead);
+            free(startdir);
+            return returnValue;
+        }
     } else {
         doFile(startdir, listHead);
     }
@@ -177,11 +187,13 @@ int main(int argc, const char *argv[])
 }
 
 static int doDir(char *dirName, ACTION *listHead){
+    int returnValue = SUCCESS;
     DIR *dirStream = opendir(dirName);
     if(dirStream == NULL){
         // Rest of error message is coming from errno
         error(0, errno, "Directory %s", dirName);
-        return 1;
+        returnValue = WARNING;
+        goto CLEANEXIT_DODIR;
     }
 
     struct dirent *dirContent = readdir(dirStream);
@@ -193,13 +205,15 @@ static int doDir(char *dirName, ACTION *listHead){
             if(snprintf(fullPath, pathLength, "%s/%s", dirName, dirContent->d_name) >= pathLength){
                 // output truncated
                 error(0, errno, "Error while building new file path");
-                break;
+                returnValue = CRITICAL;
+                goto CLEANEXIT_DODIR;
             }
         } else {
             if(snprintf(fullPath, pathLength, "/%s", dirContent->d_name) >= pathLength){
                 // output truncated
                 error(0, errno, "Error while building new file path");
-                break;
+                returnValue = CRITICAL;
+                goto CLEANEXIT_DODIR;
             }
         }
 
@@ -207,6 +221,8 @@ static int doDir(char *dirName, ACTION *listHead){
         errno = 0;
         if(lstat(fullPath, &buf) == -1){
             error(0, errno, "Error reading starting point");
+            returnValue = CRITICAL;
+            goto CLEANEXIT_DODIR;
         }
 
         if(S_ISDIR(buf.st_mode) != 0){
@@ -214,7 +230,8 @@ static int doDir(char *dirName, ACTION *listHead){
                 if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
                     if(printEntry(dirContent->d_name) != 0){
                         error(0, errno, "Error while printing to stdout.");
-                        return 1;
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
                     }
                     FLAG_STD_DIRS_PRINTED = 1;
                 }
@@ -222,7 +239,8 @@ static int doDir(char *dirName, ACTION *listHead){
                 if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
                     if(printEntry(fullPath) != 0){
                         error(0, errno, "Error while printing to stdout.");
-                        return 1;
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
                     }
 
                 } else {
@@ -234,6 +252,8 @@ static int doDir(char *dirName, ACTION *listHead){
                         int retVal = (*current->actionFunction)(fullPath, current->param);
                         if(retVal < 0){
                             error(0, errno, "Something bad happened, idk what.");
+                            returnValue = CRITICAL;
+                            goto CLEANEXIT_DODIR;
                         } else if(retVal == 0){
                             matchedActions++;
                         }
@@ -250,32 +270,58 @@ static int doDir(char *dirName, ACTION *listHead){
                     }
                 }
 
-                doDir(fullPath, listHead);
+                const int retVal = doDir(fullPath, listHead);
+                if(retVal == CRITICAL){
+                    returnValue = CRITICAL;
+                    goto CLEANEXIT_DODIR;
+                } else if(retVal == WARNING){
+                    goto CONTINUE_DODIR;
+                }
             }
         } else {
-            doFile(fullPath, listHead);
+            int ret = doFile(fullPath, listHead);
+
+            if(ret < 0){
+                // critical
+                returnValue = CRITICAL;
+                goto CLEANEXIT_DODIR;
+            } else if(ret > 0){
+                // warning
+                returnValue = WARNING;
+                goto CLEANEXIT_DODIR;
+            }
         }
 
         // Todo: Check error handling
+
+        CONTINUE_DODIR:
         errno = 0;
         dirContent = readdir(dirStream);
         if(dirContent == NULL && errno != 0){
             error(0, errno, "Error while reading directory!");
+            returnValue = CRITICAL;
+            goto CLEANEXIT_DODIR;
         }
     }
 
-    errno = 0;
-    if(closedir(dirStream) != 0){
-        error(0, errno, "Error closing directorystream");
+    CLEANEXIT_DODIR:
+    if(dirStream != NULL){
+        errno = 0;
+        if(closedir(dirStream) != 0){
+            error(0, errno, "Error closing directorystream");
+            returnValue = CRITICAL;
+        }
     }
 
-    return 0;
+    return returnValue;
 }
 
 static int doFile(char  *fileName, ACTION *listHead){
+    int returnValue = 0;
+
     if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
         if(printf("%s\n", fileName) < 0){
-            return 1;
+            returnValue = 1;
         }
     } else {
         // Iterate through action list and call function pointer
@@ -285,7 +331,8 @@ static int doFile(char  *fileName, ACTION *listHead){
         while(1){
             int retVal = (*current->actionFunction)(fileName, current->param);
             if(retVal < 0){
-                error(0, errno, "Something bad happened, idk what.");
+                //error(0, errno, "Something bad happened, idk what.");
+                returnValue = CRITICAL;
             } else if(retVal == 0){
                 matchedActions++;
             }
@@ -302,7 +349,7 @@ static int doFile(char  *fileName, ACTION *listHead){
         }
     }
 
-    return 0;
+    return returnValue;
 }
 
 static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
