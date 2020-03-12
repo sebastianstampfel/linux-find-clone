@@ -701,7 +701,7 @@ static int printEntry(char *fileName){
 
         strftime(lastModDateFormatted,13,"%b %d %H:%M", lastModifiedCon);
 
-        printf("%s\t", lastModDateFormatted);
+        printf("%ld\t%s\t", fileStats.st_size, lastModDateFormatted);
 
         if(!isLink){
             printf("%s\n", fileName);
