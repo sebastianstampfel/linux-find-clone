@@ -699,7 +699,7 @@ static int printEntry(char *fileName){
 
         char lastModDateFormatted[13];
 
-        strftime(lastModDateFormatted,13,"%b %d %H:%M", lastModifiedCon);
+        strftime(lastModDateFormatted,13,"%b %e %H:%M", lastModifiedCon);
 
         printf("%ld\t%s\t", fileStats.st_size, lastModDateFormatted);
 
