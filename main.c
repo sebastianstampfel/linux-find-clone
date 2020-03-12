@@ -236,7 +236,7 @@ static int doDir(char *dirName, ACTION *listHead){
                     FLAG_STD_DIRS_PRINTED = 1;
                 }
             } else {
-                if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
+                if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
                     if(printEntry(fullPath) != 0){
                         error(0, errno, "Error while printing to stdout.");
                         returnValue = WARNING;
@@ -317,10 +317,10 @@ static int doDir(char *dirName, ACTION *listHead){
 static int doFile(char  *fileName, ACTION *listHead){
     int returnValue = 0;
 
-    if(FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1){
-        if(printf("%s\n", fileName) < 0){
-            fprintf(stderr, "Error printing to stdout()\n");
-            returnValue = WARNING;
+    if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
+        const int retVal = printEntry(fileName);
+        if(retVal != SUCCESS){
+            returnValue = retVal;
         }
     } else {
         // Iterate through action list and call function pointer
@@ -573,6 +573,75 @@ static void cleanupList(ACTION *listHead){
 static int printEntry(char *fileName){
     if(FLAG_LS == 1){
        // complex printout required
+        struct stat fileStats;
+        errno = 0;
+        if(lstat(fileName, &fileStats) == -1){
+            error(0, errno, "Error while getting file stats.");
+            return WARNING;
+        }
+
+        char *permissions = calloc(11, sizeof(char));
+        if (S_ISDIR(fileStats.st_mode)) {
+            *permissions = 'd';
+        } else {
+            *permissions = '-';
+        }
+
+        if (fileStats.st_mode & S_IRUSR) {
+            *(permissions + 1) = 'r';
+        } else {
+            *(permissions + 1) = '-';
+        }
+        if (fileStats.st_mode & S_IWUSR) {
+            *(permissions + 2) = 'w';
+        } else {
+            *(permissions + 2) = '-';
+        }
+        if (fileStats.st_mode & S_IXUSR) {
+            *(permissions + 3) = 'x';
+        } else {
+            *(permissions + 3) = '-';
+        }
+
+
+        if (fileStats.st_mode & S_IRGRP) {
+            *(permissions + 4) = 'r';
+        } else {
+            *(permissions + 4) = '-';
+        }
+        if (fileStats.st_mode & S_IWGRP) {
+            *(permissions + 5) = 'w';
+        } else {
+            *(permissions + 5) = '-';
+        }
+        if (fileStats.st_mode & S_IXGRP) {
+            *(permissions + 6) = 'x';
+        } else {
+            *(permissions + 6) = '-';
+        }
+
+
+        if (fileStats.st_mode & S_IROTH) {
+            *(permissions + 7) = 'r';
+        } else {
+            *(permissions + 7) = '-';
+        }
+        if (fileStats.st_mode & S_IWOTH) {
+            *(permissions + 8) = 'w';
+        } else {
+            *(permissions + 8) = '-';
+        }
+        if (fileStats.st_mode & S_IXOTH) {
+            *(permissions + 9) = 'x';
+        } else {
+            *(permissions + 9) = '-';
+        }
+
+
+        *(permissions + 10) = '\0';
+
+        printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats.st_ino, fileStats.st_blocks, permissions,
+               fileStats.st_nlink, fileStats.st_uid, fileStats.st_gid, fileName);
        return SUCCESS;
     } else {
         if(printf("%s\n", fileName) < 0){
