@@ -582,7 +582,10 @@ static int printEntry(char *fileName){
             return WARNING;
         }
 
-        printf("%ld\t%ld\t", fileStats.st_ino, fileStats.st_blocks);
+        if(printf("%ld\t%ld\t", fileStats.st_ino, fileStats.st_blocks) < 0){
+            error(0, errno, "Error while printing to stdout");
+            return CRITICAL;
+        }
 
         char *permissions = calloc(12, sizeof(char));
         if(S_ISDIR(fileStats.st_mode) != 0) {
@@ -646,6 +649,8 @@ static int printEntry(char *fileName){
         } else {
             *(permissions + 8) = '-';
         }
+
+        // TODO: Stickybit
         if (fileStats.st_mode & S_IXOTH) {
             *(permissions + 9) = 'x';
         } else {
