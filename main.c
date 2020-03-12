@@ -34,6 +34,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <grp.h>
+#include <time.h>
 
 // --------------------------------------------------------------- defines --
 #define SUCCESS 0
@@ -220,8 +222,8 @@ static int doDir(char *dirName, ACTION *listHead){
         struct stat buf;
         errno = 0;
         if(lstat(fullPath, &buf) == -1){
-            error(0, errno, "Error reading starting point");
-            returnValue = CRITICAL;
+            error(0, errno, "Error reading %s", fullPath);
+            returnValue = WARNING;
             goto CLEANEXIT_DODIR;
         }
 
@@ -580,9 +582,22 @@ static int printEntry(char *fileName){
             return WARNING;
         }
 
-        char *permissions = calloc(11, sizeof(char));
-        if (S_ISDIR(fileStats.st_mode)) {
+        printf("%ld\t%ld\t", fileStats.st_ino, fileStats.st_blocks);
+
+        char *permissions = calloc(12, sizeof(char));
+        if(S_ISDIR(fileStats.st_mode) != 0) {
             *permissions = 'd';
+        } else if(S_ISBLK(fileStats.st_mode) != 0){
+            *permissions = 'b';
+        } else if(S_ISCHR(fileStats.st_mode) != 0){
+            *permissions = 'c';
+        } else if(S_ISLNK(fileStats.st_mode) != 0){
+            // set link flag!
+            *permissions = 'l';
+        } else if(S_ISFIFO(fileStats.st_mode) != 0){
+            *permissions = 'p';
+        } else if(S_ISSOCK(fileStats.st_mode) != 0){
+            *permissions = 's';
         } else {
             *permissions = '-';
         }
@@ -640,8 +655,60 @@ static int printEntry(char *fileName){
 
         *(permissions + 10) = '\0';
 
-        printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats.st_ino, fileStats.st_blocks, permissions,
-               fileStats.st_nlink, fileStats.st_uid, fileStats.st_gid, fileName);
+        printf("%s\t%ld\t", permissions, fileStats.st_nlink);
+
+        errno = 0;
+        const struct passwd *pwdOwner = getpwuid(fileStats.st_uid);
+        if (pwdOwner == NULL){
+            if(errno == EINTR || errno == EIO || errno == EMFILE || errno == ENFILE || errno == ENOMEM || errno == ERANGE){
+                error(0, errno, "Error while checking user info");
+                return CRITICAL;
+            } else {
+                // user not found; print uid
+                printf("%u\t\t", fileStats.st_uid);
+            }
+        } else {
+            // user found; print name
+            printf("%s\t", pwdOwner->pw_name);
+        }
+
+        errno = 0;
+        const struct group *grpOwner = getgrgid(fileStats.st_gid);
+        if (grpOwner == NULL){
+            if(errno == EINTR || errno == EIO || errno == EMFILE || errno == ENFILE || errno == ENOMEM || errno == ERANGE){
+                error(0, errno, "Error while checking group info");
+                return CRITICAL;
+            } else {
+                // group not found; print gid
+                printf("%u\t\t", fileStats.st_gid);
+            }
+        } else {
+            // group found; print name
+            printf("%s\t", grpOwner->gr_name);
+        }
+
+        struct tm *lastModifiedCon = localtime(&fileStats.st_mtim.tv_sec);
+
+        // st_mtim
+
+        char lastModDateFormatted[13];
+
+        strftime(lastModDateFormatted,13,"%b %d %H:%M", lastModifiedCon);
+
+        printf("%s\t%s\n", lastModDateFormatted, fileName);
+
+        // Nummer des Inodes
+        // Anzahl der Blocks
+        // Permissions
+        // Anzahl der Links
+        // Owner (Name!)
+        // Group (Name!)
+        // Last Modification Time
+        // Namen
+
+        //printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats.st_ino, fileStats.st_blocks, permissions,
+               //fileStats.st_nlink, fileStats.st_uid, fileStats.st_gid, fileName);
+
        return SUCCESS;
     } else {
         if(printf("%s\n", fileName) < 0){
