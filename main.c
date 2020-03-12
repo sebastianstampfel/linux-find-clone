@@ -587,6 +587,7 @@ static int printEntry(char *fileName){
             return CRITICAL;
         }
 
+        int isLink = 0;
         char *permissions = calloc(12, sizeof(char));
         if(S_ISDIR(fileStats.st_mode) != 0) {
             *permissions = 'd';
@@ -595,7 +596,7 @@ static int printEntry(char *fileName){
         } else if(S_ISCHR(fileStats.st_mode) != 0){
             *permissions = 'c';
         } else if(S_ISLNK(fileStats.st_mode) != 0){
-            // set link flag!
+            isLink = 1;
             *permissions = 'l';
         } else if(S_ISFIFO(fileStats.st_mode) != 0){
             *permissions = 'p';
@@ -700,7 +701,21 @@ static int printEntry(char *fileName){
 
         strftime(lastModDateFormatted,13,"%b %d %H:%M", lastModifiedCon);
 
-        printf("%s\t%s\n", lastModDateFormatted, fileName);
+        printf("%s\t", lastModDateFormatted);
+
+        if(!isLink){
+            printf("%s\n", fileName);
+        } else {
+            char linkbuf[fileStats.st_size + 1];
+            const int charsread = readlink(fileName ,linkbuf, fileStats.st_size);
+
+            if(charsread == -1){
+                /* error */
+            } else {
+                linkbuf[fileStats.st_size] = '\0';
+                printf("%s -> %s\n", fileName, linkbuf);
+            }
+        }
 
         // Nummer des Inodes
         // Anzahl der Blocks
