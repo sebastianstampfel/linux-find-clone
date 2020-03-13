@@ -616,10 +616,20 @@ static int printEntry(char *fileName){
         } else {
             *(permissions + 2) = '-';
         }
-        if (fileStats.st_mode & S_IXUSR) {
-            *(permissions + 3) = 'x';
+
+        // TODO: Setuid Bit! 's' if bit + user execute; 'S' if bit + NO user execute
+        if(fileStats.st_mode & S_ISUID){
+            if (fileStats.st_mode & S_IXUSR) {
+                *(permissions + 3) = 'S';
+            } else {
+                *(permissions + 3) = 's';
+            }
         } else {
-            *(permissions + 3) = '-';
+            if (fileStats.st_mode & S_IXUSR) {
+                *(permissions + 3) = 'x';
+            } else {
+                *(permissions + 3) = '-';
+            }
         }
 
 
@@ -633,11 +643,22 @@ static int printEntry(char *fileName){
         } else {
             *(permissions + 5) = '-';
         }
-        if (fileStats.st_mode & S_IXGRP) {
-            *(permissions + 6) = 'x';
+
+        // TODO: Setgid Bit! 's' if bit + group execute; 'S' if bit + NO group execute
+        if(fileStats.st_mode & S_ISGID){
+            if (fileStats.st_mode & S_IXGRP) {
+                *(permissions + 6) = 'S';
+            } else {
+                *(permissions + 6) = 's';
+            }
         } else {
-            *(permissions + 6) = '-';
+            if (fileStats.st_mode & S_IXGRP) {
+                *(permissions + 6) = 'x';
+            } else {
+                *(permissions + 6) = '-';
+            }
         }
+
 
 
         if (fileStats.st_mode & S_IROTH) {
