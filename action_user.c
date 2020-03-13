@@ -15,7 +15,6 @@ int doActionUser(char *fileName, char *params){
 
         switch(paramCheck){
             case -1:
-                error(0, errno, "Error while performing user check");
                 return -1;
             case 0:
                 paramType = 1;
@@ -24,7 +23,6 @@ int doActionUser(char *fileName, char *params){
                 paramType = 2;
                 break;
             default:
-                error(0, errno, "Error while performing user check");
                 return -1;
         }
     }
