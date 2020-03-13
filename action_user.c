@@ -70,6 +70,8 @@ int doActionUser(char *fileName, char *params){
             }
         }
     }
+
+    return -1;
 }
 
 /**
