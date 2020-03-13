@@ -179,14 +179,19 @@ int main(int argc, const char *argv[])
             return returnValue;
         }
     } else {
-        doFile(startdir, listHead);
+        if(doFile(startdir, listHead) == CRITICAL){
+            returnValue = CRITICAL;
+            cleanupList(listHead);
+            free(startdir);
+            return returnValue;
+        }
     }
 
 
     cleanupList(listHead);
     free(startdir);
 
-    exit(0);
+    return 0;
 }
 
 static int doDir(char *dirName, ACTION *listHead){
