@@ -4,13 +4,12 @@
 
 #include "action_user.h"
 #include <errno.h>
-
+#include <error.h>
 
 // TODO: Implement
 int doActionUser(char *fileName, char *params){
     int retValue = 0;
     if(checkPWFile(params) != 0){
-        fprintf(stderr, "user: \"%s\" does not exist\n", params);
         exit(EXIT_FAILURE);
     }
     else{
@@ -24,17 +23,6 @@ int doActionUser(char *fileName, char *params){
             long file_uid = sb.st_uid;
             char *name = getUser(file_uid);    
             if(strcmp(params, name) != 0){
-
-//                long uid = -1;
-//                if(sscanf(params, "%ld", &uid) == 1){
-//                    if(uid != (long)sb.st_uid){
-//                        retValue = 1;
-//                    }
-//                }
-//                else{
-//                    retValue = 1;
-//                }
-
                 errno = 0;
                 char *ptr;
                 long uid =  strtol(params, &ptr, 10);
@@ -80,7 +68,9 @@ int checkPWFile(char *params){
                 // overflow
                 retValue = 1;
             } else {
+                errno = 0;
                 if(getpwuid((uid_t)uid) == NULL){
+                    error(0, errno, "User %u does not exist!", uid);
                     retValue = 1;
                 }
             }
