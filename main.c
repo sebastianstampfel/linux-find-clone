@@ -393,45 +393,65 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
 
         for(int i = 2; i < argc; i ++){
             if(strcmp(argv[i], "-user") == 0){
-                if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
-                    fprintf(stderr, "Error while adding list entry!\n");
-                    returnValue = CRITICAL;
+                if(FLAG_LS != 1 && FLAG_PRINT != 1){
+                    if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
+                        fprintf(stderr, "Error while adding list entry!\n");
+                        returnValue = CRITICAL;
+                        break;
+                    }
+                    ACTION_COUNT++;
+                } else {
                     break;
                 }
-                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-name") == 0){
-                if(addListEntry(listHead, NAME, argv[i + 1]) == NULL){
-                    fprintf(stderr, "Error while adding list entry!\n");
-                    returnValue = CRITICAL;
+                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
+                    if (addListEntry(listHead, NAME, argv[i + 1]) == NULL) {
+                        fprintf(stderr, "Error while adding list entry!\n");
+                        returnValue = CRITICAL;
+                        break;
+                    }
+                    ACTION_COUNT++;
+                } else {
                     break;
                 }
-                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
-                if(addListEntry(listHead, TYPE, argv[i + 1]) == NULL){
-                    fprintf(stderr, "Error while adding list entry!\n");
-                    returnValue = CRITICAL;
+                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
+                    if (addListEntry(listHead, TYPE, argv[i + 1]) == NULL) {
+                        fprintf(stderr, "Error while adding list entry!\n");
+                        returnValue = CRITICAL;
+                        break;
+                    }
+                    ACTION_COUNT++;
+                } else {
                     break;
                 }
-                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
                 FLAG_PRINT++;
             } else if(strcmp(argv[i], "-ls") == 0){
                 FLAG_LS++;
             } else if(strcmp(argv[i], "-nouser") == 0){
-                if(addListEntry(listHead, NOUSER, NULL) == NULL){
-                    fprintf(stderr, "Error while adding list entry!\n");
+                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
+                    if (addListEntry(listHead, NOUSER, NULL) == NULL) {
+                        fprintf(stderr, "Error while adding list entry!\n");
+                        break;
+                    }
+                    ACTION_COUNT++;
+                } else {
                     break;
                 }
-                ACTION_COUNT++;
             } else if(strcmp(argv[i], "-path") == 0){
-                if(addListEntry(listHead, PATH, argv[i + 1]) == NULL){
-                    fprintf(stderr, "Error while adding list entry!\n");
+                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
+                    if (addListEntry(listHead, PATH, argv[i + 1]) == NULL) {
+                        fprintf(stderr, "Error while adding list entry!\n");
+                        break;
+                    }
+                    ACTION_COUNT++;
+                } else {
                     break;
                 }
-                ACTION_COUNT++;
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
