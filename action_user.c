@@ -59,18 +59,21 @@ int checkPWFile(char *params){
 
         if(ptr == params){
             // total conversion fail
+            error(0, errno, "User %s does not exist!", params);
             retValue = 1;
         } else if(*ptr != '\0') {
             // incomplete conversion
+            error(0, errno, "User %s does not exist!", params);
             retValue = 1;
         } else {
             if(errno){
                 // overflow
+                error(0, errno, "User %s does not exist!", params);
                 retValue = 1;
             } else {
                 errno = 0;
                 if(getpwuid((uid_t)uid) == NULL){
-                    error(0, errno, "User %lu does not exist!", uid);
+                    error(0, errno, "User %s does not exist!", params);
                     retValue = 1;
                 }
             }
