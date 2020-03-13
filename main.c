@@ -582,7 +582,7 @@ static int printEntry(char *fileName){
             return WARNING;
         }
 
-        if(printf("%ld\t%ld\t", fileStats.st_ino, fileStats.st_blocks) < 0){
+        if(printf("%9ld %6ld ", fileStats.st_ino, fileStats.st_blocks) < 0){
             error(0, errno, "Error while printing to stdout");
             return CRITICAL;
         }
@@ -661,7 +661,7 @@ static int printEntry(char *fileName){
 
         *(permissions + 10) = '\0';
 
-        printf("%s\t%ld\t", permissions, fileStats.st_nlink);
+        printf("%s %3ld ", permissions, fileStats.st_nlink);
 
         errno = 0;
         const struct passwd *pwdOwner = getpwuid(fileStats.st_uid);
@@ -671,11 +671,11 @@ static int printEntry(char *fileName){
                 return CRITICAL;
             } else {
                 // user not found; print uid
-                printf("%u\t\t", fileStats.st_uid);
+                printf("%-8u ", fileStats.st_uid);
             }
         } else {
             // user found; print name
-            printf("%s\t", pwdOwner->pw_name);
+            printf("%-8s ", pwdOwner->pw_name);
         }
 
         errno = 0;
@@ -686,11 +686,11 @@ static int printEntry(char *fileName){
                 return CRITICAL;
             } else {
                 // group not found; print gid
-                printf("%u\t\t", fileStats.st_gid);
+                printf("%-8u ", fileStats.st_gid);
             }
         } else {
             // group found; print name
-            printf("%s\t", grpOwner->gr_name);
+            printf("%-8s ", grpOwner->gr_name);
         }
 
         struct tm *lastModifiedCon = localtime(&fileStats.st_mtim.tv_sec);
@@ -701,7 +701,7 @@ static int printEntry(char *fileName){
 
         strftime(lastModDateFormatted,13,"%b %e %H:%M", lastModifiedCon);
 
-        printf("%ld\t%s\t", fileStats.st_size, lastModDateFormatted);
+        printf("%8ld %s ", fileStats.st_size, lastModDateFormatted);
 
         if(!isLink){
             printf("%s\n", fileName);
