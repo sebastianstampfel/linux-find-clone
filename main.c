@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <grp.h>
 #include <time.h>
+#include <sys/sysmacros.h>
 
 // --------------------------------------------------------------- defines --
 #define SUCCESS 0
@@ -588,12 +589,15 @@ static int printEntry(char *fileName){
         }
 
         int isLink = 0;
+        int isDevice = 0;
         char *permissions = calloc(12, sizeof(char));
         if(S_ISDIR(fileStats.st_mode) != 0) {
             *permissions = 'd';
         } else if(S_ISBLK(fileStats.st_mode) != 0){
+            isDevice = 1;
             *permissions = 'b';
         } else if(S_ISCHR(fileStats.st_mode) != 0){
+            isDevice = 1;
             *permissions = 'c';
         } else if(S_ISLNK(fileStats.st_mode) != 0){
             isLink = 1;
@@ -685,7 +689,7 @@ static int printEntry(char *fileName){
                 *(permissions + 9) = '-';
             }
         }
-        
+
         *(permissions + 10) = '\0';
 
         printf("%s %3ld ", permissions, fileStats.st_nlink);
@@ -728,7 +732,13 @@ static int printEntry(char *fileName){
 
         strftime(lastModDateFormatted,13,"%b %e %H:%M", lastModifiedCon);
 
-        printf("%8ld %s ", fileStats.st_size, lastModDateFormatted);
+        if(isDevice == 1){
+            printf("%3d, %3d ", major(fileStats.st_rdev), minor(fileStats.st_rdev));
+        } else {
+            printf("%8ld ", fileStats.st_size);
+        }
+
+        printf("%s ", lastModDateFormatted);
 
         if(!isLink){
             printf("%s\n", fileName);
