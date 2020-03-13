@@ -70,7 +70,7 @@ int checkPWFile(char *params){
             } else {
                 errno = 0;
                 if(getpwuid((uid_t)uid) == NULL){
-                    error(0, errno, "User %u does not exist!", uid);
+                    error(0, errno, "User %lu does not exist!", uid);
                     retValue = 1;
                 }
             }
