@@ -574,6 +574,17 @@ static void cleanupList(ACTION *listHead){
 }
 
 static int printEntry(char *fileName){
+    if(FLAG_LS == 0 && FLAG_PRINT == 0){
+        FLAG_PRINT++;
+    }
+
+    for(int i = 0; i < FLAG_PRINT; i++){
+        if(printf("%s\n", fileName) < 0){
+            fprintf(stderr, "Error printing to stdout()\n");
+            return WARNING;
+        }
+    }
+
     for(int i = 0; i < FLAG_LS; i++){
        // complex printout required
         struct stat fileStats;
@@ -583,7 +594,7 @@ static int printEntry(char *fileName){
             return WARNING;
         }
 
-        if(printf("%9ld %6ld ", fileStats.st_ino, fileStats.st_blocks) < 0){
+        if(printf("%9ld %6ld ", fileStats.st_ino, fileStats.st_blocks/2) < 0){
             error(0, errno, "Error while printing to stdout");
             return CRITICAL;
         }
@@ -766,13 +777,6 @@ static int printEntry(char *fileName){
         //printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats.st_ino, fileStats.st_blocks, permissions,
                //fileStats.st_nlink, fileStats.st_uid, fileStats.st_gid, fileName);
 
-    }
-
-    for(int i = 0; i < FLAG_PRINT; i++){
-        if(printf("%s\n", fileName) < 0){
-            fprintf(stderr, "Error printing to stdout()\n");
-            return WARNING;
-        }
     }
 
     return SUCCESS;
