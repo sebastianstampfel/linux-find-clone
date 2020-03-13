@@ -672,14 +672,20 @@ static int printEntry(char *fileName){
             *(permissions + 8) = '-';
         }
 
-        // TODO: Stickybit
-        if (fileStats.st_mode & S_IXOTH) {
-            *(permissions + 9) = 'x';
+        if(fileStats.st_mode & S_ISVTX){
+            if (fileStats.st_mode & S_IXOTH) {
+                *(permissions + 9) = 't';
+            } else {
+                *(permissions + 9) = 'T';
+            }
         } else {
-            *(permissions + 9) = '-';
+            if (fileStats.st_mode & S_IXOTH) {
+                *(permissions + 9) = 'x';
+            } else {
+                *(permissions + 9) = '-';
+            }
         }
-
-
+        
         *(permissions + 10) = '\0';
 
         printf("%s %3ld ", permissions, fileStats.st_nlink);
