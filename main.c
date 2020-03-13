@@ -417,9 +417,9 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
-                FLAG_PRINT = 1;
+                FLAG_PRINT++;
             } else if(strcmp(argv[i], "-ls") == 0){
-                FLAG_LS = 1;
+                FLAG_LS++;
             } else if(strcmp(argv[i], "-nouser") == 0){
                 if(addListEntry(listHead, NOUSER, NULL) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
@@ -574,7 +574,7 @@ static void cleanupList(ACTION *listHead){
 }
 
 static int printEntry(char *fileName){
-    if(FLAG_LS == 1){
+    for(int i = 0; i < FLAG_LS; i++){
        // complex printout required
         struct stat fileStats;
         errno = 0;
@@ -766,13 +766,14 @@ static int printEntry(char *fileName){
         //printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats.st_ino, fileStats.st_blocks, permissions,
                //fileStats.st_nlink, fileStats.st_uid, fileStats.st_gid, fileName);
 
-       return SUCCESS;
-    } else {
+    }
+
+    for(int i = 0; i < FLAG_PRINT; i++){
         if(printf("%s\n", fileName) < 0){
             fprintf(stderr, "Error printing to stdout()\n");
             return WARNING;
-        } else {
-            return SUCCESS;
         }
     }
+
+    return SUCCESS;
 }
