@@ -17,7 +17,7 @@ int doActionName(char *filePath, char *params){
     char *fileName = fileNameFromPath(filePath);
     if(fileName != NULL && params != NULL){
         errno = 0;
-        int result = fnmatch(params, fileName, FNM_NOESCAPE);
+        int result = fnmatch(params, fileName, 0);
         switch(result){
             case 0:
                 // match
