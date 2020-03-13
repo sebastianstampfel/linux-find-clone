@@ -620,9 +620,9 @@ static int printEntry(char *fileName){
         // TODO: Setuid Bit! 's' if bit + user execute; 'S' if bit + NO user execute
         if(fileStats.st_mode & S_ISUID){
             if (fileStats.st_mode & S_IXUSR) {
-                *(permissions + 3) = 'S';
-            } else {
                 *(permissions + 3) = 's';
+            } else {
+                *(permissions + 3) = 'S';
             }
         } else {
             if (fileStats.st_mode & S_IXUSR) {
@@ -647,9 +647,9 @@ static int printEntry(char *fileName){
         // TODO: Setgid Bit! 's' if bit + group execute; 'S' if bit + NO group execute
         if(fileStats.st_mode & S_ISGID){
             if (fileStats.st_mode & S_IXGRP) {
-                *(permissions + 6) = 'S';
-            } else {
                 *(permissions + 6) = 's';
+            } else {
+                *(permissions + 6) = 'S';
             }
         } else {
             if (fileStats.st_mode & S_IXGRP) {
