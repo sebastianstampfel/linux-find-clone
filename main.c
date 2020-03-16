@@ -483,12 +483,14 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
             } else if(strcmp(argv[i], "-nouser") == 0){
                 if (addListEntry(listHead, NOUSER, NULL) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
                 ACTION_COUNT++;
             } else if(strcmp(argv[i], "-path") == 0){
                 if (addListEntry(listHead, PATH, argv[i + 1]) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
                 ACTION_COUNT++;
