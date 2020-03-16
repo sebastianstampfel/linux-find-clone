@@ -245,6 +245,34 @@ static int doDir(char *dirName, ACTION *listHead){
                         goto CLEANEXIT_DODIR;
                     }
                     FLAG_STD_DIRS_PRINTED = 1;
+                } else if(FLAG_STD_DIRS_PRINTED == 0) {
+                    
+                    ACTION *current = listHead;
+                    int matchedActions = 0;
+
+                    while(1){
+                        int retVal = (*current->actionFunction)(fullPath, current->param);
+                        if(retVal < 0){
+                            error(0, errno, "Something bad happened, idk what.");
+                            returnValue = CRITICAL;
+                            goto CLEANEXIT_DODIR;
+                        } else if(retVal == 0){
+                            matchedActions++;
+                        }
+
+                        if(current->next != NULL){
+                            current = current->next;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    if(matchedActions == ACTION_COUNT){
+                        if(printEntry(fullPath) != 0){
+                            returnValue = WARNING;
+                            goto CLEANEXIT_DODIR;
+                        }
+                    }
                 }
             } else {
                 if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
@@ -277,7 +305,10 @@ static int doDir(char *dirName, ACTION *listHead){
                     }
 
                     if(matchedActions == ACTION_COUNT){
-                        printEntry(fullPath);
+                        if(printEntry(fullPath) != 0){
+                            returnValue = WARNING;
+                            goto CLEANEXIT_DODIR;
+                        }
                     }
                 }
 
@@ -792,19 +823,6 @@ static int printEntry(char *fileName){
                 printf("%s -> %s\n", fileName, linkbuf);
             }
         }
-
-        // Nummer des Inodes
-        // Anzahl der Blocks
-        // Permissions
-        // Anzahl der Links
-        // Owner (Name!)
-        // Group (Name!)
-        // Last Modification Time
-        // Namen
-
-        //printf("%ld\t%ld\t%s\t%ld\t%d\t%d\t%s\n", fileStats.st_ino, fileStats.st_blocks, permissions,
-               //fileStats.st_nlink, fileStats.st_uid, fileStats.st_gid, fileName);
-
     }
 
     return SUCCESS;
