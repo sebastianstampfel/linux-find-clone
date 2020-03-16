@@ -14,7 +14,7 @@ int doActionLs(char *fileName, char *params){
     params = params;
     // ------------------------------------------------------------------------
     struct stat *fileStats = malloc(sizeof(struct stat));
-    stat(fileName, fileStats);
+    lstat(fileName, fileStats);
 
     char *permissions = calloc(11, sizeof(char));
     if (S_ISDIR(fileStats->st_mode)) {

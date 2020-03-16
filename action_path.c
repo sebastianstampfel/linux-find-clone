@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <error.h>
 #include <stdlib.h>
+#include <string.h>
 
 int doActionPath(char *filePath, char *params){
 
@@ -14,9 +15,16 @@ int doActionPath(char *filePath, char *params){
     filePath = filePath;
     params = params;
     // ------------------------------------------------------------------------
-    if(filePath != NULL){
+    if(filePath != NULL && params != NULL){
+        const int pathLength = strlen(params);
+
+        if(*(params + (pathLength - 1)) == '/'){
+            error(0, errno, "Path %s will not match anything because it ends with /.", params);
+            return -1;
+        }
+
         errno = 0;
-        int result = fnmatch(params, filePath, FNM_NOESCAPE | FNM_PERIOD);
+        int result = fnmatch(params, filePath, 0);
         switch(result){
             case 0:
                 // match
@@ -32,6 +40,4 @@ int doActionPath(char *filePath, char *params){
     } else {
         return -1;
     }
-
-    return 1;
 }
