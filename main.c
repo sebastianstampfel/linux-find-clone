@@ -214,10 +214,13 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
 
         if(S_ISDIR(buf.st_mode) != 0){
             if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
-                if(printEntry(dirName) != 0){
-                    error(0, errno, "Error while printing to stdout.");
-                    returnValue = WARNING;
-                    goto CLEANEXIT_DODIR;
+                if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
+                    FLAG_STD_DIRS_PRINTED = 1;
+                    if(printEntry(dirName) != 0){
+                        error(0, errno, "Error while printing to stdout.");
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
+                    }
                 }
             } else {
                 // do actions
