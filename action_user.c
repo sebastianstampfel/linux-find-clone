@@ -8,7 +8,7 @@
 
 // TODO: Implement
 int doActionUser(char *fileName, char *params){
-    static int paramType;   // 0 = not set yet; 1 = Params is valid name; 2 = Params is valid UID
+    int paramType = 0;   // 0 = not set yet; 1 = Params is valid name; 2 = Params is valid UID
 
     if(paramType == 0){
         int paramCheck = checkPWFile(params);

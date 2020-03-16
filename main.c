@@ -230,7 +230,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                 while(1){
                     int retVal = (*current->actionFunction)(dirName, current->param);
                     if(retVal < 0){
-                        error(0, errno, "Something bad happened, idk what.");
+                        error(0, errno, "Error while performing action.");
                         returnValue = CRITICAL;
                         goto CLEANEXIT_DODIR;
                     } else if(retVal == 0){
