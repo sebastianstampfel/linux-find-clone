@@ -180,14 +180,14 @@ int main(int argc, const char *argv[])
     // travel down the dir path.
     // Else, treat as a single file.
     if(S_ISDIR(buf.st_mode) != 0){
-        if(doDir(startdir, listHead, FLAG_STPOINT) == CRITICAL){
+        if(doDir(startdir, listHead, FLAG_STPOINT) != SUCCESS){
             returnValue = CRITICAL;
             cleanupList(listHead);
             free(startdir);
             return returnValue;
         }
     } else {
-        if(doFile(startdir, listHead) == CRITICAL){
+        if(doFile(startdir, listHead) != SUCCESS){
             returnValue = CRITICAL;
             cleanupList(listHead);
             free(startdir);
