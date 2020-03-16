@@ -235,6 +235,8 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                         goto CLEANEXIT_DODIR;
                     } else if(retVal == 0){
                         matchedActions++;
+                    } else {
+                        break;
                     }
 
                     if(current->next != NULL){
@@ -322,6 +324,8 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                             goto CLEANEXIT_DODIR;
                         } else if(retVal == 0){
                             matchedActions++;
+                        } else {
+                            break;
                         }
 
                         if(current->next != NULL){
@@ -405,6 +409,8 @@ static int doFile(char  *fileName, ACTION *listHead){
                 returnValue = CRITICAL;
             } else if(retVal == 0){
                 matchedActions++;
+            } else {
+                break;
             }
 
             if(current->next != NULL){
