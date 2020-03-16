@@ -24,7 +24,7 @@ int doActionPath(char *filePath, char *params){
         }
 
         errno = 0;
-        int result = fnmatch(params, filePath, FNM_NOESCAPE);
+        int result = fnmatch(params, filePath, 0);
         switch(result){
             case 0:
                 // match
