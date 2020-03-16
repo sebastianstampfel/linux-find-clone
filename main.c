@@ -50,14 +50,14 @@
  * @brief GLOBAL - Indicates if -print was supplied as a command line argument.
  * 0: -print not supplied, 1: -print was supplied
  */
-int FLAG_PRINT = 0;
+int FLAG_CONSECUTIVE_PRINT = 0;
 
 /**
  * @brief GLOBAL - Indicates if -ls was supplied as a command line argument.
  * 0: -ls not supplied; 1: -ls was supplied
  * 
  */
-int FLAG_LS = 0;
+int FLAG_CONSECUTIVE_LS = 0;
 
 /**
  * @brief GLOBAL - Indicates if -print was the only action supplied as a command line argument.
@@ -220,7 +220,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
         }
 
         if(S_ISDIR(buf.st_mode) != 0){
-            if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
+            if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
                 if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
                     FLAG_STD_DIRS_PRINTED = 1;
                     if(printEntry(dirName) != 0){
@@ -295,7 +295,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                     FLAG_STD_DIRS_PRINTED = 1;
                 }
             } else {
-                if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
+                if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
                     if(printEntry(fullPath) != 0){
                         error(0, errno, "Error while printing to stdout.");
                         returnValue = WARNING;
@@ -395,7 +395,7 @@ static int checkFile(char *fullPath, ACTION *listHead){
 static int doFile(char  *fileName, ACTION *listHead){
     int returnValue = 0;
 
-    if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
+    if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
         const int retVal = printEntry(fileName);
         if(retVal != SUCCESS){
             returnValue = retVal;
@@ -440,9 +440,11 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
         }
 
         if(argc == 2){
-            FLAG_PRINT = 1;
+            FLAG_CONSECUTIVE_PRINT = 1;
             goto EXIT_PARSEPARAMS;
         }
+
+        int prevType = 0;
 
         for(int i = 2; i < argc; i ++){
             if(strcmp(argv[i], "-user") == 0){
@@ -451,6 +453,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
+                prevType = USER;
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-name") == 0){
@@ -459,6 +462,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
+                prevType = NAME;
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
@@ -467,6 +471,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
+                prevType = TYPE;
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
@@ -475,14 +480,20 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                FLAG_PRINT++;
+                if(prevType == PRINT){
+                    FLAG_CONSECUTIVE_PRINT++;
+                }
+                prevType = PRINT;
             } else if(strcmp(argv[i], "-ls") == 0){
                 if (addListEntry(listHead, LS, NULL) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
                     returnValue = CRITICAL;
                     break;
                 }
-                FLAG_LS++;
+                if(prevType == LS){
+                    FLAG_CONSECUTIVE_LS++;
+                }
+                prevType = LS;
             } else if(strcmp(argv[i], "-nouser") == 0){
                 if (addListEntry(listHead, NOUSER, NULL) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
@@ -490,6 +501,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     break;
                 }
                 ACTION_COUNT++;
+                prevType = NOUSER;
             } else if(strcmp(argv[i], "-path") == 0){
                 if (addListEntry(listHead, PATH, argv[i + 1]) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
@@ -497,6 +509,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     break;
                 }
                 ACTION_COUNT++;
+                prevType = PATH;
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -647,18 +660,18 @@ static void cleanupList(ACTION *listHead){
 }
 
 static int printEntry(char *fileName){
-    if(FLAG_LS == 0 && FLAG_PRINT == 0){
-        FLAG_PRINT++;
+    if(FLAG_CONSECUTIVE_LS == 0 && FLAG_CONSECUTIVE_PRINT == 0){
+        FLAG_CONSECUTIVE_PRINT++;
     }
 
-    for(int i = 0; i < FLAG_PRINT; i++){
+    for(int i = 0; i < FLAG_CONSECUTIVE_PRINT; i++){
         if(printf("%s\n", fileName) < 0){
             fprintf(stderr, "Error printing to stdout()\n");
             return WARNING;
         }
     }
 
-    for(int i = 0; i < FLAG_LS; i++){
+    for(int i = 0; i < FLAG_CONSECUTIVE_LS; i++){
        // complex printout required
         struct stat fileStats;
         errno = 0;
