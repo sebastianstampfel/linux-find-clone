@@ -371,6 +371,9 @@ static int checkFile(char *fullPath, ACTION *listHead){
             } else {
                 break;
             }
+        } else if((current->type == PRINT || current->type == LS) && matchedActions != 0){
+            matchedActions = ACTION_COUNT;
+            break;
         }
 
         if(current->next != NULL){
