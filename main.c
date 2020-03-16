@@ -42,6 +42,7 @@
 #define SUCCESS 0
 #define WARNING 1
 #define CRITICAL -1
+#define FLAG_STPOINT 1
 // -------------------------------------------------------------- typedefs --
 // --------------------------------------------------------------- globals --
 
@@ -88,7 +89,7 @@ int ACTION_COUNT = 0;
  * @see action
  * @return int 0 on success, 1 on failure 
  */
-static int doDir(char *dir_name, ACTION *listHead);
+static int doDir(char *dir_name, ACTION *listHead, int flags);
 
 /**
  * @brief Function to handle a file on the filesystem.
@@ -175,7 +176,7 @@ int main(int argc, const char *argv[])
     // travel down the dir path.
     // Else, treat as a single file.
     if(S_ISDIR(buf.st_mode) != 0){
-        if(doDir(startdir, listHead) == CRITICAL){
+        if(doDir(startdir, listHead, FLAG_STPOINT) == CRITICAL){
             returnValue = CRITICAL;
             cleanupList(listHead);
             free(startdir);
@@ -197,8 +198,57 @@ int main(int argc, const char *argv[])
     return 0;
 }
 
-static int doDir(char *dirName, ACTION *listHead){
+static int doDir(char *dirName, ACTION *listHead, int flags){
     int returnValue = SUCCESS;
+
+    if(flags == FLAG_STPOINT){
+        struct stat buf;
+        errno = 0;
+        if(lstat(dirName, &buf) == -1){
+            error(0, errno, "Error reading %s", dirName);
+            returnValue = WARNING;
+            goto CLEANEXIT_DODIR;
+        }
+
+        if(S_ISDIR(buf.st_mode) != 0){
+            if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
+                if(printEntry(dirName) != 0){
+                    error(0, errno, "Error while printing to stdout.");
+                    returnValue = WARNING;
+                    goto CLEANEXIT_DODIR;
+                }
+            } else {
+                // do actions
+                ACTION *current = listHead;
+                int matchedActions = 0;
+
+                while(1){
+                    int retVal = (*current->actionFunction)(dirName, current->param);
+                    if(retVal < 0){
+                        error(0, errno, "Something bad happened, idk what.");
+                        returnValue = CRITICAL;
+                        goto CLEANEXIT_DODIR;
+                    } else if(retVal == 0){
+                        matchedActions++;
+                    }
+
+                    if(current->next != NULL){
+                        current = current->next;
+                    } else {
+                        break;
+                    }
+                }
+
+                if(matchedActions == ACTION_COUNT){
+                    if(printEntry(dirName) != 0){
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
+                    }
+                }
+            }
+        }
+    }
+
     DIR *dirStream = opendir(dirName);
     if(dirStream == NULL){
         // Rest of error message is coming from errno
@@ -208,7 +258,7 @@ static int doDir(char *dirName, ACTION *listHead){
     }
 
     struct dirent *dirContent = readdir(dirStream);
-    while(dirContent != NULL){
+    while(1){
         const int pathLength = strlen(dirName) + strlen(dirContent->d_name) + 2;
         char fullPath[pathLength];
 
@@ -245,34 +295,6 @@ static int doDir(char *dirName, ACTION *listHead){
                         goto CLEANEXIT_DODIR;
                     }
                     FLAG_STD_DIRS_PRINTED = 1;
-                } else if(FLAG_STD_DIRS_PRINTED == 0) {
-                    
-                    ACTION *current = listHead;
-                    int matchedActions = 0;
-
-                    while(1){
-                        int retVal = (*current->actionFunction)(fullPath, current->param);
-                        if(retVal < 0){
-                            error(0, errno, "Something bad happened, idk what.");
-                            returnValue = CRITICAL;
-                            goto CLEANEXIT_DODIR;
-                        } else if(retVal == 0){
-                            matchedActions++;
-                        }
-
-                        if(current->next != NULL){
-                            current = current->next;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    if(matchedActions == ACTION_COUNT){
-                        if(printEntry(fullPath) != 0){
-                            returnValue = WARNING;
-                            goto CLEANEXIT_DODIR;
-                        }
-                    }
                 }
             } else {
                 if((FLAG_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_LS == 1 && FLAG_PRINT_ONLY == 1)){
@@ -312,7 +334,7 @@ static int doDir(char *dirName, ACTION *listHead){
                     }
                 }
 
-                const int retVal = doDir(fullPath, listHead);
+                const int retVal = doDir(fullPath, listHead, 0);
                 if(retVal == CRITICAL){
                     returnValue = CRITICAL;
                     goto CLEANEXIT_DODIR;
@@ -341,6 +363,8 @@ static int doDir(char *dirName, ACTION *listHead){
             error(0, errno, "Error while reading directory!");
             returnValue = CRITICAL;
             goto CLEANEXIT_DODIR;
+        } else if(dirContent == NULL){
+            break;
         }
     }
 
