@@ -14,14 +14,10 @@
  * TODO: Implement!
  */
 int doActionName(char *filePath, char *params){
-    // Prevent errors about unused params; Delete once function is implemented!
-    // filePath = filePath;
-    // params = params;
-    // ------------------------------------------------------------------------
     char *fileName = fileNameFromPath(filePath);
-    if(fileName != NULL){
+    if(fileName != NULL && params != NULL){
         errno = 0;
-        int result = fnmatch(params, fileName, FNM_NOESCAPE | FNM_PERIOD);
+        int result = fnmatch(params, fileName, 0);
         switch(result){
             case 0:
                 // match
@@ -55,7 +51,6 @@ char *fileNameFromPath(char *filePath){
     char *retVal = calloc(strlen(filePath), sizeof(char));
 
     while(p != NULL) {
-        // hello
         strcpy(retVal, p);
         p = strtok(NULL, "/");
     }
