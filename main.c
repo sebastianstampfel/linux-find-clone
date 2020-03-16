@@ -166,6 +166,9 @@ int main(int argc, const char *argv[])
     errno = 0;
     if(lstat(startdir, &buf) == -1){
         error(0, errno, "Error reading starting point");
+        returnValue = CRITICAL;
+        cleanupList(listHead);
+        return returnValue;
     }
 
     // If user supplies a valid directory as starting point,
