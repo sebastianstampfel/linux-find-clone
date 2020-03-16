@@ -201,6 +201,8 @@ int main(int argc, const char *argv[])
 static int doDir(char *dirName, ACTION *listHead, int flags){
     int returnValue = SUCCESS;
 
+    DIR *dirStream = NULL;
+
     if(flags == FLAG_STPOINT){
         struct stat buf;
         errno = 0;
@@ -249,7 +251,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
         }
     }
 
-    DIR *dirStream = opendir(dirName);
+    dirStream = opendir(dirName);
     if(dirStream == NULL){
         // Rest of error message is coming from errno
         error(0, errno, "Directory %s", dirName);
