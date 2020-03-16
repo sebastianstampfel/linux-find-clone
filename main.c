@@ -490,7 +490,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                if(prevType == LS){
+                if(prevType == LS || FLAG_CONSECUTIVE_LS == 0){
                     FLAG_CONSECUTIVE_LS++;
                 }
                 prevType = LS;
