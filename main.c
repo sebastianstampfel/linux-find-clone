@@ -590,6 +590,8 @@ static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
             }
         } else if(params == NULL && type == NOUSER){
             currentEntry->next->param = NULL;
+        } else if(params == NULL && (type == PRINT || type == LS)){
+            currentEntry->next->param = NULL;
         } else {
             return NULL;
         }
