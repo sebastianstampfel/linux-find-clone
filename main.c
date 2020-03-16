@@ -480,7 +480,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                if(prevType == PRINT || FLAG_CONSECUTIVE_PRINT == 0){
+                if(prevType == PRINT || FLAG_CONSECUTIVE_PRINT == 0 || prevType == LS || prevType == LS){
                     FLAG_CONSECUTIVE_PRINT++;
                 }
                 prevType = PRINT;
@@ -490,7 +490,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                if(prevType == LS || FLAG_CONSECUTIVE_LS == 0){
+                if(prevType == LS || (FLAG_CONSECUTIVE_LS == 0 && prevType == PRINT) || prevType == PRINT){
                     FLAG_CONSECUTIVE_LS++;
                 }
                 prevType = LS;
