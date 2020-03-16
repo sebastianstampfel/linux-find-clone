@@ -480,7 +480,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                if(prevType == PRINT){
+                if(prevType == PRINT || FLAG_CONSECUTIVE_PRINT == 0){
                     FLAG_CONSECUTIVE_PRINT++;
                 }
                 prevType = PRINT;
