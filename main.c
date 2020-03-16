@@ -78,6 +78,8 @@ int FLAG_STD_DIRS_PRINTED = 0;
 int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
+// TODO: DOC FOR CHECKFILE
+static int checkFile(char *fullPath, ACTION *listHead);
 /**
  * @brief Function to handle a directory on the filesystem.
  *
@@ -156,6 +158,8 @@ int main(int argc, const char *argv[])
     }
     listHead->prev = NULL;
     listHead->next = NULL;
+    listHead->type = 0;
+
     char *startdir;
     if(parseParams(argc, argv, listHead, &startdir) != 0){
         error(0, errno, "%s: Error while parsing params.\n", argv[0]);
@@ -203,6 +207,9 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
 
     DIR *dirStream = NULL;
 
+    // Starting directory should also be checked for actions
+    // provided by user
+
     if(flags == FLAG_STPOINT){
         struct stat buf;
         errno = 0;
@@ -224,30 +231,14 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                 }
             } else {
                 // do actions
-                ACTION *current = listHead;
-                int matchedActions = 0;
-
-                while(1){
-                    int retVal = (*current->actionFunction)(dirName, current->param);
-                    if(retVal < 0){
-                        error(0, errno, "Error while performing action.");
-                        returnValue = CRITICAL;
-                        goto CLEANEXIT_DODIR;
-                    } else if(retVal == 0){
-                        matchedActions++;
-                    } else {
-                        break;
-                    }
-
-                    if(current->next != NULL){
-                        current = current->next;
-                    } else {
-                        break;
-                    }
-                }
-
-                if(matchedActions == ACTION_COUNT){
+                if(listHead->type == LS || listHead->type == PRINT){
                     if(printEntry(dirName) != 0){
+                        error(0, errno, "Error while printing to stdout.");
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
+                    }
+                } else {
+                    if(checkFile(dirName, listHead) != SUCCESS){
                         returnValue = WARNING;
                         goto CLEANEXIT_DODIR;
                     }
@@ -313,33 +304,9 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
 
                 } else {
                     // do actions
-                    ACTION *current = listHead;
-                    int matchedActions = 0;
-
-                    while(1){
-                        int retVal = (*current->actionFunction)(fullPath, current->param);
-                        if(retVal < 0){
-                            error(0, errno, "Something bad happened, idk what.");
-                            returnValue = CRITICAL;
-                            goto CLEANEXIT_DODIR;
-                        } else if(retVal == 0){
-                            matchedActions++;
-                        } else {
-                            break;
-                        }
-
-                        if(current->next != NULL){
-                            current = current->next;
-                        } else {
-                            break;
-                        }
-                    }
-
-                    if(matchedActions == ACTION_COUNT){
-                        if(printEntry(fullPath) != 0){
-                            returnValue = WARNING;
-                            goto CLEANEXIT_DODIR;
-                        }
+                    if(checkFile(fullPath, listHead) != SUCCESS){
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
                     }
                 }
 
@@ -389,6 +356,39 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
     return returnValue;
 }
 
+static int checkFile(char *fullPath, ACTION *listHead){
+    ACTION *current = listHead;
+    int matchedActions = 0;
+
+    while(1){
+        if(*current->actionFunction != NULL){
+            int retVal = (*current->actionFunction)(fullPath, current->param);
+            if(retVal < 0){
+                error(0, errno, "Something bad happened, idk what.");
+                return CRITICAL;
+            } else if(retVal == 0){
+                matchedActions++;
+            } else {
+                break;
+            }
+        }
+
+        if(current->next != NULL){
+            current = current->next;
+        } else {
+            break;
+        }
+    }
+
+    if(matchedActions == ACTION_COUNT){
+        if(printEntry(fullPath) != 0){
+            return WARNING;
+        }
+    }
+
+    return SUCCESS;
+}
+
 static int doFile(char  *fileName, ACTION *listHead){
     int returnValue = 0;
 
@@ -399,32 +399,8 @@ static int doFile(char  *fileName, ACTION *listHead){
         }
     } else {
         // Iterate through action list and call function pointer
-        ACTION *current = listHead;
-        int matchedActions = 0;
-
-        while(1){
-            int retVal = (*current->actionFunction)(fileName, current->param);
-            if(retVal < 0){
-                //error(0, errno, "Something bad happened, idk what.");
-                returnValue = CRITICAL;
-            } else if(retVal == 0){
-                matchedActions++;
-            } else {
-                break;
-            }
-
-            if(current->next != NULL){
-                current = current->next;
-            } else {
-                break;
-            }
-        }
-
-        if(matchedActions == ACTION_COUNT){
-            const int retVal = printEntry(fileName);
-            if(retVal != SUCCESS){
-                returnValue = retVal;
-            }
+        if(checkFile(fileName, listHead) != SUCCESS){
+            returnValue = WARNING;
         }
     }
 
@@ -467,65 +443,55 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
 
         for(int i = 2; i < argc; i ++){
             if(strcmp(argv[i], "-user") == 0){
-                if(FLAG_LS != 1 && FLAG_PRINT != 1){
-                    if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
-                        fprintf(stderr, "Error while adding list entry!\n");
-                        returnValue = CRITICAL;
-                        break;
-                    }
-                    ACTION_COUNT++;
-                } else {
+                if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-name") == 0){
-                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
-                    if (addListEntry(listHead, NAME, argv[i + 1]) == NULL) {
-                        fprintf(stderr, "Error while adding list entry!\n");
-                        returnValue = CRITICAL;
-                        break;
-                    }
-                    ACTION_COUNT++;
-                } else {
+                if (addListEntry(listHead, NAME, argv[i + 1]) == NULL) {
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
-                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
-                    if (addListEntry(listHead, TYPE, argv[i + 1]) == NULL) {
-                        fprintf(stderr, "Error while adding list entry!\n");
-                        returnValue = CRITICAL;
-                        break;
-                    }
-                    ACTION_COUNT++;
-                } else {
+                if (addListEntry(listHead, TYPE, argv[i + 1]) == NULL) {
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
                     break;
                 }
+                ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
+                if (addListEntry(listHead, PRINT, NULL) == NULL) {
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
+                    break;
+                }
                 FLAG_PRINT++;
             } else if(strcmp(argv[i], "-ls") == 0){
+                if (addListEntry(listHead, LS, NULL) == NULL) {
+                    fprintf(stderr, "Error while adding list entry!\n");
+                    returnValue = CRITICAL;
+                    break;
+                }
                 FLAG_LS++;
             } else if(strcmp(argv[i], "-nouser") == 0){
-                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
-                    if (addListEntry(listHead, NOUSER, NULL) == NULL) {
-                        fprintf(stderr, "Error while adding list entry!\n");
-                        break;
-                    }
-                    ACTION_COUNT++;
-                } else {
+                if (addListEntry(listHead, NOUSER, NULL) == NULL) {
+                    fprintf(stderr, "Error while adding list entry!\n");
                     break;
                 }
+                ACTION_COUNT++;
             } else if(strcmp(argv[i], "-path") == 0){
-                if(FLAG_LS != 1 && FLAG_PRINT != 1) {
-                    if (addListEntry(listHead, PATH, argv[i + 1]) == NULL) {
-                        fprintf(stderr, "Error while adding list entry!\n");
-                        break;
-                    }
-                    ACTION_COUNT++;
-                } else {
+                if (addListEntry(listHead, PATH, argv[i + 1]) == NULL) {
+                    fprintf(stderr, "Error while adding list entry!\n");
                     break;
                 }
+                ACTION_COUNT++;
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -540,22 +506,22 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
 }
 
 static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
-    if(FLAG_PRINT_ONLY != 0){
+    if(FLAG_PRINT_ONLY != 0 && type != PRINT && type != LS){
         FLAG_PRINT_ONLY = 0;    // Action(s) different to print was provided as arguments
     }
     ACTION *currentEntry = listHead;
 
-    if(currentEntry != NULL && currentEntry->prev == NULL && currentEntry->next == NULL && currentEntry->param == NULL){
+    if(currentEntry != NULL && currentEntry->prev == NULL && currentEntry->next == NULL && currentEntry->param == NULL && currentEntry->type == 0){
         currentEntry->type = type;
-        if(params != NULL || type == NOUSER){
-            if(type == NOUSER){
+        if(params != NULL || type == NOUSER || type == PRINT || type == LS){
+            if(type == NOUSER || type == PRINT || type == LS){
                 currentEntry->param = NULL;
             } else {
                 currentEntry->param = calloc(strlen(params)+1, sizeof(char));
             }
 
-            if(currentEntry->param != NULL || type == NOUSER){
-                if(type != NOUSER){
+            if(currentEntry->param != NULL || type == NOUSER || type == PRINT || type == LS){
+                if(type != NOUSER && type != PRINT && type != LS){
                     if(strcpy(currentEntry->param, params) == NULL){
                         return NULL;
                     }
@@ -568,9 +534,6 @@ static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
                     case NAME:
                         currentEntry->actionFunction = &doActionName;
                         break;
-                    case LS:
-                        currentEntry->actionFunction = &doActionLs;
-                        break;
                     case NOUSER:
                         currentEntry->actionFunction = &doActionNoUser;
                         break;
@@ -579,6 +542,12 @@ static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
                         break;
                     case PATH:
                         currentEntry->actionFunction = &doActionPath;
+                        break;
+                    case PRINT:
+                        currentEntry->actionFunction = NULL;
+                        break;
+                    case LS:
+                        currentEntry->actionFunction = NULL;
                         break;
                     default:
                         error(1, errno, "Unknown type!\n");;
@@ -630,7 +599,10 @@ static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
                 currentEntry->next->actionFunction = &doActionName;
                 break;
             case LS:
-                currentEntry->next->actionFunction = &doActionLs;
+                currentEntry->next->actionFunction = NULL;
+                break;
+            case PRINT:
+                currentEntry->next->actionFunction = NULL;
                 break;
             case NOUSER:
                 currentEntry->next->actionFunction = &doActionNoUser;
