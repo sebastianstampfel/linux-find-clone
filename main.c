@@ -1,26 +1,20 @@
-//*
-// @file main.c
-// Betriebssysteme MyFind-Main-File
-// Beispiel 1
-//
-// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
-// @author Milan Kollmann <ic19b058@technikum-wien.at>
-// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
-// @date 2020/02/22
-//
-// @version 1
-//
-// @todo Test it more seriously and more complete.
-// @todo Review it for missing error checks.
-// @todo Review it and check the source against the rules at
-//       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
-//
+/**
+* @file main.c
+* Betriebssysteme MyFind-Main-File
+* Beispiel 1
+*
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
-// -------------------------------------------------------------- includes --
+/* -------------------------------------------------------------- includes -- */
 
 #include "action.h"
 #include "action_user.h"
-#include "action_ls.h"
 #include "action_name.h"
 #include "action_nouser.h"
 #include "action_type.h"
@@ -38,50 +32,80 @@
 #include <time.h>
 #include <sys/sysmacros.h>
 
-// --------------------------------------------------------------- defines --
+/* --------------------------------------------------------------- defines -- */
+/** 
+ * @def SUCCESS
+ * @brief Macro for return value in case of successful computation.
+ */
 #define SUCCESS 0
+/**
+ * @def WARNING
+ * @brief Macro for return value in case of errors. Program may continue.
+ */
 #define WARNING 1
+/**
+ * @def CRITICAL
+ * @brief Macro for return value in case of critical errors. Program should
+ *          be suspended safely.
+ * @see cleanupList
+ */
 #define CRITICAL -1
+/**
+ * @def FLAG_STPOINT
+ * @brief Flag to indicate passing of starting point to _doDir()_.
+ * @see doDir
+ */
 #define FLAG_STPOINT 1
+/**
+ * @def FLAG_PRINTENTRY_PRINT
+ * @brief Flag to indicate to _printEntry()_ to do a non-detailed print
+ *          to stdout.
+ * @see printEntry
+ */
 #define FLAG_PRINTENTRY_PRINT 1
+/**
+ * @def FLAG_PRINTENTRY_LS
+ * @brief Flag to indicate to _printEntry()_ to do detailed print
+ *          to stdout.
+ * @see printEntry
+ */
 #define FLAG_PRINTENTRY_LS 2
 // -------------------------------------------------------------- typedefs --
 // --------------------------------------------------------------- globals --
 
 /**
- * @brief GLOBAL - Indicates if -print was supplied as a command line argument.
- * 0: -print not supplied, 1: -print was supplied
- */
-int FLAG_CONSECUTIVE_PRINT = 0;
-
-/**
- * @brief GLOBAL - Indicates if -ls was supplied as a command line argument.
- * 0: -ls not supplied; 1: -ls was supplied
- * 
- */
-int FLAG_CONSECUTIVE_LS = 0;
-
-/**
- * @brief GLOBAL - Indicates if -print was the only action supplied as a command line argument.
+ * @brief GLOBAL - Indicates if -print was the only action supplied as an argument.
  * 0: Actions other than -print were provided, 1: -print is only action supplied.
  * Defaults to 1, in case no argument other than a start-path was provided.
  */
-int FLAG_PRINT_ONLY = 1;
+static int FLAG_PRINT_ONLY = 1;
 
 /**
  * @brief GLOBAL - Tracks if "." and ".." have been printed to stdout
  * 0: not printed yet, 1: printed
  */
-int FLAG_STD_DIRS_PRINTED = 0;
+static int FLAG_STD_DIRS_PRINTED = 0;
 
 /**
  * @brief GLOBAL - Total count of actions supplied as command line arguments.
  */
-int ACTION_COUNT = 0;
+static int ACTION_COUNT = 0;
 
 // ------------------------------------------------------------- functions --
 // TODO: DOC FOR CHECKFILE
+
+/**
+ * @brief Function to perform actions on file
+ * 
+ * Iterates through the action list and performs checks. If 
+ * 
+ * @param fullPath Absolute or relative path to file
+ * @param listHead Head of action list
+ * @see ACTION
+ * @return int SUCCESS, WARNING, CRITICAL
+ */
 static int checkFile(char *fullPath, ACTION *listHead);
+
 /**
  * @brief Function to handle a directory on the filesystem.
  *
@@ -90,8 +114,11 @@ static int checkFile(char *fullPath, ACTION *listHead);
  * 
  * @param dir_name Name of the directory
  * @param listHead Head of doubly linked list of action struct
+ * @param flags Indicates if dir provided is starting point.
+*                 (FLAG_STPOINT) 
  * @see action
- * @return int 0 on success, 1 on failure 
+ * @see FLAG_STPOINT
+ * @return int SUCCESS, WARNING, CRITICAL
  */
 static int doDir(char *dir_name, ACTION *listHead, int flags);
 
@@ -101,7 +128,7 @@ static int doDir(char *dir_name, ACTION *listHead, int flags);
  * @param fileName Path to the file
  * @param listHead Head of doubly linked list of action struct
  * @see action
- * @return int 0 on success, 1 on failure 
+ * @return int SUCCESS, WARNING, CRITICAL
  */
 static int doFile(char * fileName, ACTION *listHead);
 
@@ -118,7 +145,8 @@ static int doFile(char * fileName, ACTION *listHead);
  * @param startDir Directory to start at
  * @return int 0 on success, 1 on failure
  */
-static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir);
+static int parseParams(int argc, const char *argv[], ACTION *listHead, 
+                        char **startDir);
 
 /**
  * @brief Adds an action to doubly linked list. Calles by parseParams().
@@ -455,17 +483,9 @@ static int checkFile(char *fullPath, ACTION *listHead){
 static int doFile(char  *fileName, ACTION *listHead){
     int returnValue = 0;
 
-//    if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
-//        const int retVal = printEntry(fileName);
-//        if(retVal != SUCCESS){
-//            returnValue = retVal;
-//        }
-//    } else {
-        // Iterate through action list and call function pointer
-        if(checkFile(fileName, listHead) != SUCCESS){
-            returnValue = WARNING;
-        }
-//    }
+    if(checkFile(fileName, listHead) != SUCCESS){
+        returnValue = WARNING;
+    }
 
     return returnValue;
 }
@@ -708,17 +728,6 @@ static void cleanupList(ACTION *listHead){
 }
 
 static int printEntry(char *fileName, int flags){
-//    if(FLAG_CONSECUTIVE_LS == 0 && FLAG_CONSECUTIVE_PRINT == 0){
-//        FLAG_CONSECUTIVE_PRINT++;
-//    }
-//
-//    for(int i = 0; i < FLAG_CONSECUTIVE_PRINT; i++){
-//        if(printf("%s\n", fileName) < 0){
-//            fprintf(stderr, "Error printing to stdout()\n");
-//            return WARNING;
-//        }
-//    }
-
     if(flags == FLAG_PRINTENTRY_PRINT){
         if(printf("%s\n", fileName) < 0){
             fprintf(stderr, "Error printing to stdout()\n");
@@ -726,7 +735,6 @@ static int printEntry(char *fileName, int flags){
         }
     }
 
-    // for(int i = 0; i < FLAG_CONSECUTIVE_LS; i++){
     if(flags == FLAG_PRINTENTRY_LS){
        // complex printout required
         struct stat fileStats;
@@ -763,6 +771,7 @@ static int printEntry(char *fileName, int flags){
             *permissions = '-';
         }
 
+        /* User-permissions */
         if (fileStats.st_mode & S_IRUSR) {
             *(permissions + 1) = 'r';
         } else {
@@ -774,7 +783,7 @@ static int printEntry(char *fileName, int flags){
             *(permissions + 2) = '-';
         }
 
-        // TODO: Setuid Bit! 's' if bit + user execute; 'S' if bit + NO user execute
+        /* Setuid-Bit */
         if(fileStats.st_mode & S_ISUID){
             if (fileStats.st_mode & S_IXUSR) {
                 *(permissions + 3) = 's';
@@ -789,7 +798,7 @@ static int printEntry(char *fileName, int flags){
             }
         }
 
-
+        /* Group permissions */
         if (fileStats.st_mode & S_IRGRP) {
             *(permissions + 4) = 'r';
         } else {
@@ -801,7 +810,7 @@ static int printEntry(char *fileName, int flags){
             *(permissions + 5) = '-';
         }
 
-        // TODO: Setgid Bit! 's' if bit + group execute; 'S' if bit + NO group execute
+        /* Setgid bits */
         if(fileStats.st_mode & S_ISGID){
             if (fileStats.st_mode & S_IXGRP) {
                 *(permissions + 6) = 's';
@@ -816,8 +825,7 @@ static int printEntry(char *fileName, int flags){
             }
         }
 
-
-
+        /* Others permissions */
         if (fileStats.st_mode & S_IROTH) {
             *(permissions + 7) = 'r';
         } else {
@@ -829,6 +837,7 @@ static int printEntry(char *fileName, int flags){
             *(permissions + 8) = '-';
         }
 
+        /* Sticky-bit */
         if(fileStats.st_mode & S_ISVTX){
             if (fileStats.st_mode & S_IXOTH) {
                 *(permissions + 9) = 't';
@@ -878,10 +887,7 @@ static int printEntry(char *fileName, int flags){
         }
 
         struct tm *lastModifiedCon = localtime(&fileStats.st_mtim.tv_sec);
-
-        // st_mtim
-
-        char lastModDateFormatted[13];
+        char lastModDateFormatted[13]; /* 13 - fixed date length */
 
         strftime(lastModDateFormatted,13,"%b %e %H:%M", lastModifiedCon);
 

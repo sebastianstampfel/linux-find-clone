@@ -1,6 +1,15 @@
-//
-// Created by sebastian on 3/1/20.
-//
+/**
+* @file action_type.c
+* Betriebssysteme MyFind Action-Type-File
+* Beispiel 1
+*
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
 #include "action_type.h"
 #include <sys/stat.h>
