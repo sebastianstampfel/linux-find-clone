@@ -43,6 +43,8 @@
 #define WARNING 1
 #define CRITICAL -1
 #define FLAG_STPOINT 1
+#define FLAG_PRINTENTRY_PRINT 1
+#define FLAG_PRINTENTRY_LS 2
 // -------------------------------------------------------------- typedefs --
 // --------------------------------------------------------------- globals --
 
@@ -146,7 +148,7 @@ static void cleanupList(ACTION *listHead);
  * @param fileName Path to file to be printed
  * @return int 0 on success, 1 on failure
  */
-static int printEntry(char *fileName);
+static int printEntry(char *fileName, int flags);
 
 int main(int argc, const char *argv[])
 {
@@ -220,22 +222,46 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
         }
 
         if(S_ISDIR(buf.st_mode) != 0){
-            if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
-                if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
-                    FLAG_STD_DIRS_PRINTED = 1;
-                    if(printEntry(dirName) != 0){
-                        error(0, errno, "Error while printing to stdout.");
-                        returnValue = WARNING;
-                        goto CLEANEXIT_DODIR;
-                    }
-                }
-            } else {
+//            if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
+//                if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
+//                    FLAG_STD_DIRS_PRINTED = 1;
+//                    if(printEntry(dirName) != 0){
+//                        error(0, errno, "Error while printing to stdout.");
+//                        returnValue = WARNING;
+//                        goto CLEANEXIT_DODIR;
+//                    }
+//                }
+//            } else {
                 // do actions
-                if(listHead->type == LS || listHead->type == PRINT){
-                    if(printEntry(dirName) != 0){
-                        error(0, errno, "Error while printing to stdout.");
-                        returnValue = WARNING;
-                        goto CLEANEXIT_DODIR;
+                if(listHead->type == LS){
+                    if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
+                        FLAG_STD_DIRS_PRINTED = 1;
+                        if(printEntry(dirName, FLAG_PRINTENTRY_LS) != 0){
+                            error(0, errno, "Error while printing to stdout.");
+                            returnValue = WARNING;
+                            goto CLEANEXIT_DODIR;
+                        }
+                    } else {
+                        if (printEntry(dirName, FLAG_PRINTENTRY_LS) != 0) {
+                            error(0, errno, "Error while printing to stdout.");
+                            returnValue = WARNING;
+                            goto CLEANEXIT_DODIR;
+                        }
+                    }
+                } else if(listHead->type == PRINT){
+                    if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
+                        FLAG_STD_DIRS_PRINTED = 1;
+                        if(printEntry(dirName, FLAG_PRINTENTRY_PRINT) != 0){
+                            error(0, errno, "Error while printing to stdout.");
+                            returnValue = WARNING;
+                            goto CLEANEXIT_DODIR;
+                        }
+                    } else {
+                        if (printEntry(dirName, FLAG_PRINTENTRY_PRINT) != 0) {
+                            error(0, errno, "Error while printing to stdout.");
+                            returnValue = WARNING;
+                            goto CLEANEXIT_DODIR;
+                        }
                     }
                 } else {
                     if(checkFile(dirName, listHead) != SUCCESS){
@@ -243,7 +269,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                         goto CLEANEXIT_DODIR;
                     }
                 }
-            }
+//            }
         }
     }
 
@@ -285,30 +311,30 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
         }
 
         if(S_ISDIR(buf.st_mode) != 0){
-            if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
-                if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
-                    if(printEntry(dirContent->d_name) != 0){
-                        error(0, errno, "Error while printing to stdout.");
-                        returnValue = WARNING;
-                        goto CLEANEXIT_DODIR;
-                    }
-                    FLAG_STD_DIRS_PRINTED = 1;
-                }
-            } else {
-                if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
-                    if(printEntry(fullPath) != 0){
-                        error(0, errno, "Error while printing to stdout.");
-                        returnValue = WARNING;
-                        goto CLEANEXIT_DODIR;
-                    }
-
-                } else {
+//            if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
+//                if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
+//                    if(printEntry(dirContent->d_name) != 0){
+//                        error(0, errno, "Error while printing to stdout.");
+//                        returnValue = WARNING;
+//                        goto CLEANEXIT_DODIR;
+//                    }
+//                    FLAG_STD_DIRS_PRINTED = 1;
+//                }
+//            } else {
+//                if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
+//                    if(printEntry(fullPath) != 0){
+//                        error(0, errno, "Error while printing to stdout.");
+//                        returnValue = WARNING;
+//                        goto CLEANEXIT_DODIR;
+//                    }
+//
+//                } else {
                     // do actions
                     if(checkFile(fullPath, listHead) != SUCCESS){
                         returnValue = WARNING;
                         goto CLEANEXIT_DODIR;
                     }
-                }
+                //}
 
                 const int retVal = doDir(fullPath, listHead, 0);
                 if(retVal == CRITICAL){
@@ -317,7 +343,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                 } else if(retVal == WARNING){
                     goto CONTINUE_DODIR;
                 }
-            }
+            //}
         } else {
             int ret = doFile(fullPath, listHead);
 
@@ -359,6 +385,7 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
 static int checkFile(char *fullPath, ACTION *listHead){
     ACTION *current = listHead;
     int matchedActions = 0;
+    int checksPerformed = 0;
 
     while(1){
         if(*current->actionFunction != NULL){
@@ -367,13 +394,19 @@ static int checkFile(char *fullPath, ACTION *listHead){
                 //error(0, errno, "Something bad happened, idk what.");
                 return CRITICAL;
             } else if(retVal == 0){
+                checksPerformed++;
                 matchedActions++;
             } else {
                 break;
             }
-        } else if((current->type == PRINT || current->type == LS) && matchedActions != 0){
-            matchedActions = ACTION_COUNT;
-            break;
+        } else if(current->type == PRINT && (matchedActions == checksPerformed)){
+            if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
+                return WARNING;
+            }
+        } else if(current->type == LS && (matchedActions == checksPerformed)){
+            if(printEntry(fullPath, FLAG_PRINTENTRY_LS) != 0){
+                return WARNING;
+            }
         }
 
         if(current->next != NULL){
@@ -384,7 +417,7 @@ static int checkFile(char *fullPath, ACTION *listHead){
     }
 
     if(matchedActions == ACTION_COUNT){
-        if(printEntry(fullPath) != 0){
+        if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
             return WARNING;
         }
     }
@@ -395,17 +428,17 @@ static int checkFile(char *fullPath, ACTION *listHead){
 static int doFile(char  *fileName, ACTION *listHead){
     int returnValue = 0;
 
-    if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
-        const int retVal = printEntry(fileName);
-        if(retVal != SUCCESS){
-            returnValue = retVal;
-        }
-    } else {
+//    if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
+//        const int retVal = printEntry(fileName);
+//        if(retVal != SUCCESS){
+//            returnValue = retVal;
+//        }
+//    } else {
         // Iterate through action list and call function pointer
         if(checkFile(fileName, listHead) != SUCCESS){
             returnValue = WARNING;
         }
-    }
+//    }
 
     return returnValue;
 }
@@ -440,11 +473,12 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
         }
 
         if(argc == 2){
-            FLAG_CONSECUTIVE_PRINT = 1;
+            if (addListEntry(listHead, PRINT, NULL) == NULL) {
+                fprintf(stderr, "Error while adding list entry!\n");
+                returnValue = CRITICAL;
+            }
             goto EXIT_PARSEPARAMS;
         }
-
-        int prevType = 0;
 
         for(int i = 2; i < argc; i ++){
             if(strcmp(argv[i], "-user") == 0){
@@ -453,7 +487,6 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                prevType = USER;
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-name") == 0){
@@ -462,7 +495,6 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                prevType = NAME;
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-type") == 0){
@@ -471,7 +503,6 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                prevType = TYPE;
                 ACTION_COUNT++;
                 i++;
             } else if(strcmp(argv[i], "-print") == 0){
@@ -480,20 +511,12 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     returnValue = CRITICAL;
                     break;
                 }
-                if((FLAG_CONSECUTIVE_PRINT == 0 && FLAG_CONSECUTIVE_LS == 0)|| prevType == PRINT || prevType == LS){
-                    FLAG_CONSECUTIVE_PRINT++;
-                }
-                prevType = PRINT;
             } else if(strcmp(argv[i], "-ls") == 0){
                 if (addListEntry(listHead, LS, NULL) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
                     returnValue = CRITICAL;
                     break;
                 }
-                if((FLAG_CONSECUTIVE_LS == 0 && FLAG_CONSECUTIVE_PRINT == 0) || prevType == LS || prevType == PRINT){
-                    FLAG_CONSECUTIVE_LS++;
-                }
-                prevType = LS;
             } else if(strcmp(argv[i], "-nouser") == 0){
                 if (addListEntry(listHead, NOUSER, NULL) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
@@ -501,7 +524,6 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     break;
                 }
                 ACTION_COUNT++;
-                prevType = NOUSER;
             } else if(strcmp(argv[i], "-path") == 0){
                 if (addListEntry(listHead, PATH, argv[i + 1]) == NULL) {
                     fprintf(stderr, "Error while adding list entry!\n");
@@ -509,7 +531,6 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                     break;
                 }
                 ACTION_COUNT++;
-                prevType = PATH;
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
@@ -659,19 +680,27 @@ static void cleanupList(ACTION *listHead){
     }
 }
 
-static int printEntry(char *fileName){
-    if(FLAG_CONSECUTIVE_LS == 0 && FLAG_CONSECUTIVE_PRINT == 0){
-        FLAG_CONSECUTIVE_PRINT++;
-    }
+static int printEntry(char *fileName, int flags){
+//    if(FLAG_CONSECUTIVE_LS == 0 && FLAG_CONSECUTIVE_PRINT == 0){
+//        FLAG_CONSECUTIVE_PRINT++;
+//    }
+//
+//    for(int i = 0; i < FLAG_CONSECUTIVE_PRINT; i++){
+//        if(printf("%s\n", fileName) < 0){
+//            fprintf(stderr, "Error printing to stdout()\n");
+//            return WARNING;
+//        }
+//    }
 
-    for(int i = 0; i < FLAG_CONSECUTIVE_PRINT; i++){
+    if(flags == FLAG_PRINTENTRY_PRINT){
         if(printf("%s\n", fileName) < 0){
             fprintf(stderr, "Error printing to stdout()\n");
             return WARNING;
         }
     }
 
-    for(int i = 0; i < FLAG_CONSECUTIVE_LS; i++){
+    // for(int i = 0; i < FLAG_CONSECUTIVE_LS; i++){
+    if(flags == FLAG_PRINTENTRY_LS){
        // complex printout required
         struct stat fileStats;
         errno = 0;
