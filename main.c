@@ -408,17 +408,37 @@ static int checkFile(char *fullPath, ACTION *listHead){
             } else {
                 break;
             }
-        } else if(current->type == PRINT && (matchedActions == checksPerformed) && current->next == NULL){
-            if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
-                return WARNING;
+        } else if(current->type == PRINT && (matchedActions == checksPerformed)){
+            if(current->next != NULL){
+                if(current->next->type == PRINT || current->next->type == LS){
+                    if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
+                        return WARNING;
+                    } else {
+                        printCount++;
+                    }
+                }
             } else {
-                printCount++;
+                if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
+                    return WARNING;
+                } else {
+                    printCount++;
+                }
             }
-        } else if(current->type == LS && (matchedActions == checksPerformed) && current->next == NULL){
-            if(printEntry(fullPath, FLAG_PRINTENTRY_LS) != 0){
-                return WARNING;
+        } else if(current->type == LS && (matchedActions == checksPerformed)){
+            if(current->next != NULL){
+                if(current->next->type == PRINT || current->next->type == LS){
+                    if(printEntry(fullPath, FLAG_PRINTENTRY_LS) != 0){
+                        return WARNING;
+                    } else {
+                        printCount++;
+                    }
+                }
             } else {
-                printCount++;
+                if(printEntry(fullPath, FLAG_PRINTENTRY_LS) != 0){
+                    return WARNING;
+                } else {
+                    printCount++;
+                }
             }
         }
 
