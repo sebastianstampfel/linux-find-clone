@@ -364,7 +364,7 @@ static int checkFile(char *fullPath, ACTION *listHead){
         if(*current->actionFunction != NULL){
             int retVal = (*current->actionFunction)(fullPath, current->param);
             if(retVal < 0){
-                error(0, errno, "Something bad happened, idk what.");
+                //error(0, errno, "Something bad happened, idk what.");
                 return CRITICAL;
             } else if(retVal == 0){
                 matchedActions++;
