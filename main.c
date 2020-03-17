@@ -222,54 +222,43 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
         }
 
         if(S_ISDIR(buf.st_mode) != 0){
-//            if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
-//                if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
-//                    FLAG_STD_DIRS_PRINTED = 1;
-//                    if(printEntry(dirName) != 0){
-//                        error(0, errno, "Error while printing to stdout.");
-//                        returnValue = WARNING;
-//                        goto CLEANEXIT_DODIR;
-//                    }
-//                }
-//            } else {
-                // do actions
-                if(listHead->type == LS){
-                    if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
-                        FLAG_STD_DIRS_PRINTED = 1;
-                        if(printEntry(dirName, FLAG_PRINTENTRY_LS) != 0){
-                            error(0, errno, "Error while printing to stdout.");
-                            returnValue = WARNING;
-                            goto CLEANEXIT_DODIR;
-                        }
-                    } else {
-                        if (printEntry(dirName, FLAG_PRINTENTRY_LS) != 0) {
-                            error(0, errno, "Error while printing to stdout.");
-                            returnValue = WARNING;
-                            goto CLEANEXIT_DODIR;
-                        }
-                    }
-                } else if(listHead->type == PRINT){
-                    if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
-                        FLAG_STD_DIRS_PRINTED = 1;
-                        if(printEntry(dirName, FLAG_PRINTENTRY_PRINT) != 0){
-                            error(0, errno, "Error while printing to stdout.");
-                            returnValue = WARNING;
-                            goto CLEANEXIT_DODIR;
-                        }
-                    } else {
-                        if (printEntry(dirName, FLAG_PRINTENTRY_PRINT) != 0) {
-                            error(0, errno, "Error while printing to stdout.");
-                            returnValue = WARNING;
-                            goto CLEANEXIT_DODIR;
-                        }
+            // do actions
+            if(listHead->type == LS){
+                if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
+                    FLAG_STD_DIRS_PRINTED = 1;
+                    if(printEntry(dirName, FLAG_PRINTENTRY_LS) != 0){
+                        error(0, errno, "Error while printing to stdout.");
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
                     }
                 } else {
-                    if(checkFile(dirName, listHead) != SUCCESS){
+                    if (printEntry(dirName, FLAG_PRINTENTRY_LS) != 0) {
+                        error(0, errno, "Error while printing to stdout.");
                         returnValue = WARNING;
                         goto CLEANEXIT_DODIR;
                     }
                 }
-//            }
+            } else if(listHead->type == PRINT){
+                if(strcmp(".", dirName) != 0 && strcmp("..", dirName) != 0){
+                    FLAG_STD_DIRS_PRINTED = 1;
+                    if(printEntry(dirName, FLAG_PRINTENTRY_PRINT) != 0){
+                        error(0, errno, "Error while printing to stdout.");
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
+                    }
+                } else {
+                    if (printEntry(dirName, FLAG_PRINTENTRY_PRINT) != 0) {
+                        error(0, errno, "Error while printing to stdout.");
+                        returnValue = WARNING;
+                        goto CLEANEXIT_DODIR;
+                    }
+                }
+            } else {
+                if(checkFile(dirName, listHead) != SUCCESS){
+                    returnValue = WARNING;
+                    goto CLEANEXIT_DODIR;
+                }
+            }
         }
     }
 
@@ -311,30 +300,8 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
         }
 
         if(S_ISDIR(buf.st_mode) != 0){
-//            if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
-//                if(FLAG_STD_DIRS_PRINTED == 0 && FLAG_PRINT_ONLY){
-//                    if(printEntry(dirContent->d_name) != 0){
-//                        error(0, errno, "Error while printing to stdout.");
-//                        returnValue = WARNING;
-//                        goto CLEANEXIT_DODIR;
-//                    }
-//                    FLAG_STD_DIRS_PRINTED = 1;
-//                }
-//            } else {
-//                if((FLAG_CONSECUTIVE_PRINT == 1 && FLAG_PRINT_ONLY == 1) || (FLAG_CONSECUTIVE_LS == 1 && FLAG_PRINT_ONLY == 1)){
-//                    if(printEntry(fullPath) != 0){
-//                        error(0, errno, "Error while printing to stdout.");
-//                        returnValue = WARNING;
-//                        goto CLEANEXIT_DODIR;
-//                    }
-//
-//                } else {
-                    // do actions
+            // do actions
             if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
-//                if (checkFile(fullPath, listHead) != SUCCESS) {
-//                    returnValue = WARNING;
-//                    goto CLEANEXIT_DODIR;
-//                }
                 goto CONTINUE_DODIR;
             } else {
                 if (checkFile(fullPath, listHead) != SUCCESS) {
@@ -342,16 +309,15 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
                     goto CLEANEXIT_DODIR;
                 }
             }
-                //}
 
-                const int retVal = doDir(fullPath, listHead, 0);
-                if(retVal == CRITICAL){
-                    returnValue = CRITICAL;
-                    goto CLEANEXIT_DODIR;
-                } else if(retVal == WARNING){
-                    goto CONTINUE_DODIR;
-                }
-            //}
+            const int retVal = doDir(fullPath, listHead, 0);
+            if(retVal == CRITICAL){
+                returnValue = CRITICAL;
+                goto CLEANEXIT_DODIR;
+            } else if(retVal == WARNING){
+                goto CONTINUE_DODIR;
+            }
+
         } else {
             int ret = doFile(fullPath, listHead);
 
@@ -424,11 +390,16 @@ static int checkFile(char *fullPath, ACTION *listHead){
                             printCount++;
                         }
                     } else if(current == listHead){
-                        (*current->next->actionFunction)(fullPath, current->next->param);
-                        if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
-                            return WARNING;
+                        // if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
+                        //     return WARNING;
+                        // } else {
+                        //    printCount++;
+                        // }
+                        if(current->next != NULL){
+                            current = current->next;
+                            continue;
                         } else {
-                            printCount++;
+                            break;
                         }
                     }
                 }
