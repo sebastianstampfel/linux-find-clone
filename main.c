@@ -390,17 +390,11 @@ static int checkFile(char *fullPath, ACTION *listHead){
                             printCount++;
                         }
                     } else if(current == listHead){
-                        // if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
-                        //     return WARNING;
-                        // } else {
-                        //    printCount++;
-                        // }
-                        if(current->next != NULL){
-                            current = current->next;
-                            continue;
-                        } else {
-                            break;
-                        }
+                         if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
+                             return WARNING;
+                         } else {
+                            printCount++;
+                         }
                     }
                 }
             } else {
