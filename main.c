@@ -424,6 +424,7 @@ static int checkFile(char *fullPath, ACTION *listHead){
                             printCount++;
                         }
                     } else if(current == listHead){
+                        (*current->next->actionFunction)(fullPath, current->next->param);
                         if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
                             return WARNING;
                         } else {
