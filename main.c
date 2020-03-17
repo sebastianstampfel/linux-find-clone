@@ -330,10 +330,18 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
 //
 //                } else {
                     // do actions
-                    if(checkFile(fullPath, listHead) != SUCCESS){
-                        returnValue = WARNING;
-                        goto CLEANEXIT_DODIR;
-                    }
+            if(strcmp(".", dirContent->d_name) == 0 || strcmp("..", dirContent->d_name) == 0){
+//                if (checkFile(fullPath, listHead) != SUCCESS) {
+//                    returnValue = WARNING;
+//                    goto CLEANEXIT_DODIR;
+//                }
+                goto CONTINUE_DODIR;
+            } else {
+                if (checkFile(fullPath, listHead) != SUCCESS) {
+                    returnValue = WARNING;
+                    goto CLEANEXIT_DODIR;
+                }
+            }
                 //}
 
                 const int retVal = doDir(fullPath, listHead, 0);
@@ -386,6 +394,7 @@ static int checkFile(char *fullPath, ACTION *listHead){
     ACTION *current = listHead;
     int matchedActions = 0;
     int checksPerformed = 0;
+    int printCount = 0;
 
     while(1){
         if(*current->actionFunction != NULL){
@@ -402,10 +411,14 @@ static int checkFile(char *fullPath, ACTION *listHead){
         } else if(current->type == PRINT && (matchedActions == checksPerformed)){
             if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
                 return WARNING;
+            } else {
+                printCount++;
             }
         } else if(current->type == LS && (matchedActions == checksPerformed)){
             if(printEntry(fullPath, FLAG_PRINTENTRY_LS) != 0){
                 return WARNING;
+            } else {
+                printCount++;
             }
         }
 
@@ -416,7 +429,7 @@ static int checkFile(char *fullPath, ACTION *listHead){
         }
     }
 
-    if(matchedActions == ACTION_COUNT){
+    if((matchedActions == ACTION_COUNT) && printCount == 0){
         if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
             return WARNING;
         }
