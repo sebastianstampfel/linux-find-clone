@@ -423,6 +423,12 @@ static int checkFile(char *fullPath, ACTION *listHead){
                         } else {
                             printCount++;
                         }
+                    } else if(current == listHead){
+                        if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
+                            return WARNING;
+                        } else {
+                            printCount++;
+                        }
                     }
                 }
             } else {
@@ -443,6 +449,12 @@ static int checkFile(char *fullPath, ACTION *listHead){
                 } else {
                     if(checksPerformed != 0){
                         if(printEntry(fullPath, FLAG_PRINTENTRY_LS) != 0){
+                            return WARNING;
+                        } else {
+                            printCount++;
+                        }
+                    } else if(current == listHead){
+                        if(printEntry(fullPath, FLAG_PRINTENTRY_PRINT) != 0){
                             return WARNING;
                         } else {
                             printCount++;
