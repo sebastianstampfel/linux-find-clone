@@ -70,8 +70,8 @@
  * @see printEntry
  */
 #define FLAG_PRINTENTRY_LS 2
-// -------------------------------------------------------------- typedefs --
-// --------------------------------------------------------------- globals --
+
+/* --------------------------------------------------------------- globals -- */
 
 /**
  * @brief GLOBAL - Indicates if -print was the only action supplied as an argument.
@@ -91,9 +91,17 @@ static int FLAG_STD_DIRS_PRINTED = 0;
  */
 static int ACTION_COUNT = 0;
 
-// ------------------------------------------------------------- functions --
-// TODO: DOC FOR CHECKFILE
+/* ------------------------------------------------------------- functions -- */
 
+/**
+ * @brief Prints usage instructions to stdout
+ * 
+ * Prints usage instructions to stdout _and exits the application afterwards_.
+ * 
+ * @param argv Argument vector
+ * @return int CRITICAL in case of error
+ */
+static int printUsage(char *argv[]);
 /**
  * @brief Function to perform actions on file
  * 
@@ -145,7 +153,7 @@ static int doFile(char * fileName, ACTION *listHead);
  * @param startDir Directory to start at
  * @return int 0 on success, 1 on failure
  */
-static int parseParams(int argc, const char *argv[], ACTION *listHead, 
+static int parseParams(int argc, char *argv[], ACTION *listHead, 
                         char **startDir);
 
 /**
@@ -178,7 +186,7 @@ static void cleanupList(ACTION *listHead);
  */
 static int printEntry(char *fileName, int flags);
 
-int main(int argc, const char *argv[])
+int main(int argc, char *argv[])
 {
     int returnValue = SUCCESS;
 
@@ -236,9 +244,6 @@ static int doDir(char *dirName, ACTION *listHead, int flags){
     int returnValue = SUCCESS;
 
     DIR *dirStream = NULL;
-
-    // Starting directory should also be checked for actions
-    // provided by user
 
     if(flags == FLAG_STPOINT){
         struct stat buf;
@@ -490,11 +495,12 @@ static int doFile(char  *fileName, ACTION *listHead){
     return returnValue;
 }
 
-static int parseParams(int argc, const char *argv[], ACTION *listHead, char **startDir){
+static int parseParams(int argc, char *argv[], ACTION *listHead, char **startDir){
     int returnValue = SUCCESS;
 
     if(argc <= 1){
         fprintf(stderr, "%s: Not enough arguments provided.\n", argv[0]);
+        printUsage(argv);
         returnValue = CRITICAL;
     } else {
         if(strcmp(argv[1], "./") == 0){
@@ -506,6 +512,9 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
             }
             **startDir = '.';
             *(*(startDir) + 1) = '\0';
+        } else if(strcmp(argv[1], "-help") == 0){
+            printUsage(argv);
+            return CRITICAL;
         } else {
             *startDir = calloc(strlen(argv[1]) + 1, sizeof(char));
             if(*startDir == NULL){
@@ -528,7 +537,11 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
         }
 
         for(int i = 2; i < argc; i ++){
-            if(strcmp(argv[i], "-user") == 0){
+            if(strcmp(argv[i], "-help") == 0){
+                printUsage(argv);
+                returnValue = CRITICAL;
+                break;
+            } else if(strcmp(argv[i], "-user") == 0){
                 if(addListEntry(listHead, USER, argv[i + 1]) == NULL){
                     fprintf(stderr, "Error while adding list entry!\n");
                     returnValue = CRITICAL;
@@ -581,7 +594,7 @@ static int parseParams(int argc, const char *argv[], ACTION *listHead, char **st
                 i++;
             } else {
                 fprintf(stderr, "%s: %s is not a valid argument.\n", argv[0], argv[i]);
-                fprintf(stderr, "You should see usage instructions now. If they were implemented already...\n");
+                printUsage(argv);
                 return 1;
             }
         }
@@ -915,4 +928,67 @@ static int printEntry(char *fileName, int flags){
     }
 
     return SUCCESS;
+}
+
+static int printUsage(char *argv[]){
+    if(printf("Myfind - Group 11\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("Usage: %s <file or directory> [action]\n\n", argv[0]) < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-help:\tCan be added anywhere to show this message\n\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+    if(printf("File or directory:\tStarting point for searching\n\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("Actions:\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-user <username or uid>:\tShows files or directories owned by this user\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-name <pattern>:\tShows files or directories matching supplied pattern\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-type [bcdpfls]:\tShows files or directories matching supplied type\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-print:\tPrints results to stdout (default if nothing else is entered)\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-ls:\tPrints ls(1) like information for results\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-nouser:\tShows files or directories owned by nonexistent user\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    if(printf("-path <pattern>:\tShows files or directories with matching path\n") < 0){
+        error(0, errno, "Error while printing to stdout");
+        return CRITICAL;
+    }
+
+    exit(0);
 }
