@@ -8,12 +8,17 @@
 #include <error.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 
-/*
- * TODO: Implement!
- */
+
 int doActionName(char *filePath, char *params){
+
+    printf("%d\n", FNM_NOESCAPE);
+    printf("%d\n", FNM_PATHNAME);
+    printf("%d\n", FNM_PERIOD);
+
+    exit(EXIT_FAILURE);
     char *fileName = fileNameFromPath(filePath);
     if(fileName != NULL && params != NULL){
         errno = 0;

@@ -1,12 +1,22 @@
+//*
+// @file action_user.c
+// Betriebssysteme MyFind-Main-File
+// Beispiel 1
 //
-// Created by sebastian on 3/1/20.
+// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+// @author Milan Kollmann <ic19b058@technikum-wien.at>
+// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+// @date 2020/02/22
 //
+//
+
+// -------------------------------------------------------------- includes --
 
 #include "action_user.h"
 #include <errno.h>
 #include <error.h>
 
-// TODO: Implement
+
 int doActionUser(char *fileName, char *params){
     static int paramType;   // 0 = not set yet; 1 = Params is valid name; 2 = Params is valid UID
 
@@ -37,15 +47,15 @@ int doActionUser(char *fileName, char *params){
 
     if(paramType == 0){
 
-    } else if(paramType == 1){
+    } else if(paramType == 1){      //checks if passed username is owner of file
         char *name = getUser(fileUid);
         if(strcmp(params, name) == 0){
             return 0;
         } else {
             return 1;
         }
-    } else if(paramType == 2){
-        errno = 0;
+    } else if(paramType == 2){      //tries to convert char array (passed user) to long (uid)
+        errno = 0;                  //and checks if uid is owner of file
         char *ptr;
         long uid = strtol(params, &ptr, 10);
 
@@ -72,24 +82,15 @@ int doActionUser(char *fileName, char *params){
     return -1;
 }
 
-/**
- * @brief Checks /etc/passwd file for supplied params
- *
- * Params are treated as a valid username first. Should no user matching the supplied
- * name be found, params is treated as an UID.
- *
- * @param params Username or uid to be checked for
- * @return -1 on error, 0 if valid name was supplied, 1 if valid uid was supplied
- */
 int checkPWFile(char *params){
     int retValue = 0;
 
     errno = 0;
-    if(getpwnam(params) == NULL){
+    if(getpwnam(params) == NULL){ //if username does not exist
         if(errno == EINTR || errno == EIO || errno == EMFILE || errno == ENFILE || errno == ENOMEM || errno == ERANGE){
             error(0, errno, "Error while checking for user:");
             retValue = -1;
-        } else {
+        } else {        //tries to convert char array (passed user) to long (uid)
             errno = 0;
             char *ptr;
             long uid =  strtol(params, &ptr, 10);
@@ -136,8 +137,8 @@ int checkPWFile(char *params){
 
 char* getUser(long uid){
     char *retValue = "";
-    struct passwd *pwd = getpwuid((uid_t)uid);
-    if(pwd != NULL){
+    struct passwd *pwd = getpwuid((uid_t)uid); 
+    if(pwd != NULL){ //get the related username if uid exists
         retValue = pwd->pw_name;
     }
     return retValue; 
