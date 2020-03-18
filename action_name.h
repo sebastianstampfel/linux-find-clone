@@ -1,5 +1,5 @@
 //*
-// @file main.c
+// @file action_name.h
 // Betriebssysteme MyFind-Main-File
 // Beispiel 1
 //
@@ -7,6 +7,8 @@
 // @author Milan Kollmann <ic19b058@technikum-wien.at>
 // @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
 // @date 2020/02/22
+//
+//
 
 #ifndef MYFIND_DEBUG_ACTION_NAME_H
 #define MYFIND_DEBUG_ACTION_NAME_H
@@ -24,9 +26,8 @@ int doActionName(char *filePath, char *params);
  * @brief Function to split up the path to file to get the filename 
  * 
  * @param filePath path to file
- * @param params string to be searched for 
  * @return char array containing filename on success, NULL on failure
  */
-char *fileNameFromPath(char *filePath);
+static char *fileNameFromPath(char *filePath);
 
 #endif //MYFIND_DEBUG_ACTION_NAME_H

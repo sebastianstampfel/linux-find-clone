@@ -55,7 +55,7 @@ int doActionType(char *filePath, char *params){
     return returnValue;
 }
 
-int parseTypeParams(char *params, TYPESTRUCT *typeList){
+static int parseTypeParams(char *params, TYPESTRUCT *typeList){
     char tmpParams[strlen(params)];
     if(strcpy(tmpParams, params) == NULL){
         fprintf(stderr, "Error while parsing params for -type.\n");
@@ -102,49 +102,49 @@ int parseTypeParams(char *params, TYPESTRUCT *typeList){
     return 0;
 }
 
-int isBlock(mode_t mode){
+static int isBlock(mode_t mode){
     if(S_ISBLK(mode) != 0){
         return 0;
     } else {
         return 1;
     }
 }
-int isCharacter(mode_t mode){
+static int isCharacter(mode_t mode){
     if(S_ISCHR(mode) != 0){
         return 0;
     } else {
         return 1;
     }
 }
-int isDirectory(mode_t mode){
+static int isDirectory(mode_t mode){
     if(S_ISDIR(mode) != 0){
         return 0;
     } else {
         return 1;
     }
 }
-int isNamedPipe(mode_t mode){
+static int isNamedPipe(mode_t mode){
     if(S_ISFIFO(mode) != 0){
         return 0;
     } else {
         return 1;
     }
 }
-int isRegularFile(mode_t mode){
+static int isRegularFile(mode_t mode){
     if(S_ISREG(mode) != 0){
         return 0;
     } else {
         return 1;
     }
 }
-int isSymbolicLink(mode_t mode){
+static int isSymbolicLink(mode_t mode){
     if(S_ISLNK(mode) != 0){
         return 0;
     } else {
         return 1;
     }
 }
-int isSocket(mode_t mode){
+static int isSocket(mode_t mode){
     if(S_ISSOCK(mode) != 0){
         return 0;
     } else {

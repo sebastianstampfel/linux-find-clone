@@ -12,7 +12,7 @@ typedef struct type {
 }TYPESTRUCT;
 
 int doActionType(char *filePath, char *params);
-int parseTypeParams(char *params, TYPESTRUCT *typeList);
+static int parseTypeParams(char *params, TYPESTRUCT *typeList);
 /**
  * b = block
  * c = character
@@ -22,12 +22,12 @@ int parseTypeParams(char *params, TYPESTRUCT *typeList);
  * l = symbolic link
  * s = socket
  */
-int isBlock(mode_t mode);
-int isCharacter(mode_t mode);
-int isDirectory(mode_t mode);
-int isNamedPipe(mode_t mode);
-int isRegularFile(mode_t mode);
-int isSymbolicLink(mode_t mode);
-int isSocket(mode_t mode);
+static int isBlock(mode_t mode);
+static int isCharacter(mode_t mode);
+static int isDirectory(mode_t mode);
+static int isNamedPipe(mode_t mode);
+static int isRegularFile(mode_t mode);
+static int isSymbolicLink(mode_t mode);
+static int isSocket(mode_t mode);
 
 #endif //MYFIND_DEBUG_ACTION_TYPE_H

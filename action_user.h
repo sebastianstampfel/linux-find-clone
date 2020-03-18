@@ -7,6 +7,8 @@
 // @author Milan Kollmann <ic19b058@technikum-wien.at>
 // @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
 // @date 2020/02/22
+//
+//
 
 #ifndef MYFIND_DEBUG_ACTION_USER_H
 #define MYFIND_DEBUG_ACTION_USER_H
@@ -49,7 +51,7 @@ int doActionUser(char *fileName, char *params);
  * @param params Username or uid to be checked for
  * @return -1 on error, 0 if valid name was supplied, 1 if valid uid was supplied
  */
-int checkPWFile(char *params);
+static int checkPWFile(char *params);
 
 /**
  * @brief Function to get the related username of a passed uid
@@ -57,7 +59,7 @@ int checkPWFile(char *params);
  * @param uid uid to get related username
  * @return char array containing the username on success, empty char array on failure
  */
-char* getUser(long uid);
+static char* getUser(long uid);
 
 
 #endif //MYFIND_DEBUG_ACTION_USER_H

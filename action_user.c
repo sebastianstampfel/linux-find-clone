@@ -82,7 +82,7 @@ int doActionUser(char *fileName, char *params){
     return -1;
 }
 
-int checkPWFile(char *params){
+static int checkPWFile(char *params){
     int retValue = 0;
 
     errno = 0;
@@ -91,7 +91,7 @@ int checkPWFile(char *params){
             error(0, errno, "Error while checking for user:");
             retValue = -1;
         } else {        //tries to convert char array (passed user) to long (uid)
-            errno = 0;
+            errno = 0;  //and checks if uid exists 
             char *ptr;
             long uid =  strtol(params, &ptr, 10);
 
@@ -135,7 +135,7 @@ int checkPWFile(char *params){
     return retValue;
 }
 
-char* getUser(long uid){
+static char* getUser(long uid){
     char *retValue = "";
     struct passwd *pwd = getpwuid((uid_t)uid); 
     if(pwd != NULL){ //get the related username if uid exists

@@ -1,6 +1,12 @@
+//*
+// @file action_name.c
+// Betriebssysteme MyFind-Main-File
+// Beispiel 1
 //
-// Created by sebastian on 3/1/20.
-//
+// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+// @author Milan Kollmann <ic19b058@technikum-wien.at>
+// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+// @date 2020/02/22
 
 #include "action_name.h"
 #include <string.h>
@@ -8,18 +14,10 @@
 #include <error.h>
 #include <errno.h>
 #include <stdlib.h>
-#include <stdio.h>
-
-
 
 int doActionName(char *filePath, char *params){
 
-    printf("%d\n", FNM_NOESCAPE);
-    printf("%d\n", FNM_PATHNAME);
-    printf("%d\n", FNM_PERIOD);
-
-    exit(EXIT_FAILURE);
-    char *fileName = fileNameFromPath(filePath);
+    char *fileName = fileNameFromPath(filePath); 
     if(fileName != NULL && params != NULL){
         errno = 0;
         int result = fnmatch(params, fileName, 0);
@@ -44,7 +42,7 @@ int doActionName(char *filePath, char *params){
     }
 }
 
-char *fileNameFromPath(char *filePath){
+static char *fileNameFromPath(char *filePath){
     char *path = calloc(strlen(filePath)+1, sizeof(char));
     if(path != NULL){
         if(strcpy(path, filePath) == NULL){
@@ -55,7 +53,7 @@ char *fileNameFromPath(char *filePath){
     char *p = strtok(path, "/");
     char *retVal = calloc(strlen(filePath), sizeof(char));
 
-    while(p != NULL) {
+    while(p != NULL) {      
         strcpy(retVal, p);
         p = strtok(NULL, "/");
     }
