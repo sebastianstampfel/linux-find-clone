@@ -5,8 +5,8 @@
 ## Based on Hello-Makefile
 ##
 ## @author Sebastian Stampfel <ic19b084@technikum-wien.at>
-## @author Benjamin Wiesbauer <>
-## @author Milan Kollmann <>
+## @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+## @author Milan Kollmann <ic19b058@technikum-wien.at>
 ## @date 2020/02/20
 ##
 
@@ -23,7 +23,7 @@ MV=mv
 GREP=grep
 DOXYGEN=doxygen
 
-OBJECTS=main.o action.o action_ls.o action_name.o action_nouser.o action_path.o action_type.o action_user.o
+OBJECTS=main.o action.o action_name.o action_nouser.o action_path.o action_type.o action_user.o
 
 EXCLUDE_PATTERN=footrulewidth
 
