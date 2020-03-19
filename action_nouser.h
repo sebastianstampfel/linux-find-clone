@@ -7,7 +7,7 @@
 
 
 /**
- * @brief Function to check if a file has no user
+ * @brief Check if owner of file exists in /etc/passwd
  * 
  * @param fileName Name of the file
  * @param params Params of action
