@@ -3,6 +3,7 @@
 * Betriebssysteme MyFind Action-Name-File
 * Beispiel 1
 *
+* @brief Contains logic for "-name" action
 * @author Sebastian Stampfel <ic19b084@technikum-wien.at>
 * @author Milan Kollmann <ic19b058@technikum-wien.at>
 * @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
@@ -18,12 +19,17 @@
 #include <errno.h>
 #include <stdlib.h>
 
-
-/*
- * TODO: Implement!
+/**
+ * @brief Function to split up the path to file to get the filename
+ *
+ * @param filePath path to file
+ * @return char array containing filename on success, NULL on failure
  */
+static char *fileNameFromPath(char *filePath);
+
 int doActionName(char *filePath, char *params){
-    char *fileName = fileNameFromPath(filePath);
+
+    char *fileName = fileNameFromPath(filePath); 
     if(fileName != NULL && params != NULL){
         errno = 0;
         int result = fnmatch(params, fileName, 0);
@@ -48,7 +54,7 @@ int doActionName(char *filePath, char *params){
     }
 }
 
-char *fileNameFromPath(char *filePath){
+static char *fileNameFromPath(char *filePath){
     char *path = calloc(strlen(filePath)+1, sizeof(char));
     if(path != NULL){
         if(strcpy(path, filePath) == NULL){
@@ -59,7 +65,7 @@ char *fileNameFromPath(char *filePath){
     char *p = strtok(path, "/");
     char *retVal = calloc(strlen(filePath), sizeof(char));
 
-    while(p != NULL) {
+    while(p != NULL) {      
         strcpy(retVal, p);
         p = strtok(NULL, "/");
     }

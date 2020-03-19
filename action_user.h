@@ -15,6 +15,7 @@
 #ifndef MYFIND_DEBUG_ACTION_USER_H
 #define MYFIND_DEBUG_ACTION_USER_H
 
+// -------------------------------------------------------------- includes --
 #include <stdio.h>
 #include <stdlib.h>
 #include <pwd.h>
@@ -24,9 +25,24 @@
 #include <time.h>
 #include <errno.h>
 
+
+// ------------------------------------------------------------- functions --
+
+/**
+ * @brief Function to check if the passed user owns the passed file/directory 
+ *
+ * If the function is called the first time, it checks if the passed username or
+ * uid exists. If not int -1 will be returned and the program will be terminated.
+ * 
+ * If the username or uid exists, the functions compare the passed username or
+ * uid with the owner of the passed file or directory
+ *  
+ * @param fileName path to file or directory
+ * @param params username or uid 
+ * @return int 0 on success, 1 if passed user does not own the file or directory
+ *         -1 on failure 
+ */
 int doActionUser(char *fileName, char *params);
-int checkPWFile(char *params);
-char* getUser(long uid);
 
 
 #endif //MYFIND_DEBUG_ACTION_USER_H

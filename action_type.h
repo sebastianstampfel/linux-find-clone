@@ -21,7 +21,6 @@ typedef struct type {
 
 }TYPESTRUCT;
 
-
 /**
  * @brief Check to see if file is of type x
  *
@@ -39,22 +38,5 @@ typedef struct type {
  * @return int 0 on success, 1 on failure 
  */
 int doActionType(char *filePath, char *params);
-
-/**
- * @brief Auxiliary function to parse the types
- * 
- * @param typelist List of types
- * @param params Params of type
- * @return int 0 on success, 1 on failure 
- */
-int parseTypeParams(char *params, TYPESTRUCT *typeList);
-
-int isBlock(mode_t mode);
-int isCharacter(mode_t mode);
-int isDirectory(mode_t mode);
-int isNamedPipe(mode_t mode);
-int isRegularFile(mode_t mode);
-int isSymbolicLink(mode_t mode);
-int isSocket(mode_t mode);
 
 #endif //MYFIND_DEBUG_ACTION_TYPE_H
