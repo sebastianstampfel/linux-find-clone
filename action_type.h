@@ -21,17 +21,34 @@ typedef struct type {
 
 }TYPESTRUCT;
 
-int doActionType(char *filePath, char *params);
-int parseTypeParams(char *params, TYPESTRUCT *typeList);
+
 /**
- * b = block
- * c = character
+ * @brief Check to see if file is of type x
+ *
+ * Type could be:
+ * b = block device
+ * c = character device
  * d = directory
  * p = named pipe
  * f = regular file
  * l = symbolic link
  * s = socket
+ * 
+ * @param filePath Path to the file
+ * @param params Params of action
+ * @return int 0 on success, 1 on failure 
  */
+int doActionType(char *filePath, char *params);
+
+/**
+ * @brief Auxiliary function to parse the types
+ * 
+ * @param typelist List of types
+ * @param params Params of type
+ * @return int 0 on success, 1 on failure 
+ */
+int parseTypeParams(char *params, TYPESTRUCT *typeList);
+
 int isBlock(mode_t mode);
 int isCharacter(mode_t mode);
 int isDirectory(mode_t mode);
