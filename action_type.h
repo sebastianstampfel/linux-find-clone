@@ -1,6 +1,16 @@
-//
-// Created by sebastian on 3/1/20.
-//
+/**
+* @file action_type.h
+* Betriebssysteme MyFind Action-Type-Header-File
+* Beispiel 1
+*
+* @brief Contains logic for "-type" action
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
 #ifndef MYFIND_DEBUG_ACTION_TYPE_H
 #define MYFIND_DEBUG_ACTION_TYPE_H
@@ -11,23 +21,22 @@ typedef struct type {
 
 }TYPESTRUCT;
 
-int doActionType(char *filePath, char *params);
-static int parseTypeParams(char *params, TYPESTRUCT *typeList);
 /**
- * b = block
- * c = character
+ * @brief Check to see if file is of type x
+ *
+ * Type could be:
+ * b = block device
+ * c = character device
  * d = directory
  * p = named pipe
  * f = regular file
  * l = symbolic link
  * s = socket
+ * 
+ * @param filePath Path to the file
+ * @param params Params of action
+ * @return int 0 on success, 1 on failure 
  */
-static int isBlock(mode_t mode);
-static int isCharacter(mode_t mode);
-static int isDirectory(mode_t mode);
-static int isNamedPipe(mode_t mode);
-static int isRegularFile(mode_t mode);
-static int isSymbolicLink(mode_t mode);
-static int isSocket(mode_t mode);
+int doActionType(char *filePath, char *params);
 
 #endif //MYFIND_DEBUG_ACTION_TYPE_H

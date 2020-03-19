@@ -1,24 +1,41 @@
-//*
-// @file action_user.c
-// Betriebssysteme MyFind-Main-File
-// Beispiel 1
-//
-// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
-// @author Milan Kollmann <ic19b058@technikum-wien.at>
-// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
-// @date 2020/02/22
-//
-//
-
-// -------------------------------------------------------------- includes --
+/**
+* @file action_user.c
+* Betriebssysteme MyFind Action-User-File
+* Beispiel 1
+*
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
 #include "action_user.h"
 #include <errno.h>
 #include <error.h>
 
+/**
+ * @brief Checks /etc/passwd file for supplied params
+ *
+ * Params are treated as a valid username first. Should no user matching the supplied
+ * name be found, params is treated as an UID.
+ *
+ * @param params Username or uid to be checked for
+ * @return -1 on error, 0 if valid name was supplied, 1 if valid uid was supplied
+ */
+static int checkPWFile(char *params);
+
+/**
+ * @brief Function to get the related username of a passed uid
+ *
+ * @param uid uid to get related username
+ * @return char array containing the username on success, empty char array on failure
+ */
+static char* getUser(long uid);
 
 int doActionUser(char *fileName, char *params){
-    static int paramType;   // 0 = not set yet; 1 = Params is valid name; 2 = Params is valid UID
+    int paramType = 0;   // 0 = not set yet; 1 = Params is valid name; 2 = Params is valid UID
 
     if(paramType == 0){
         int paramCheck = checkPWFile(params);

@@ -7,3 +7,12 @@ Run
 ```
 make all
 ```
+
+## Generating doc
+
+Run
+```
+make doc
+```
+
+Output will be in _./doc_

@@ -1,6 +1,15 @@
-//
-// Created by sebastian on 3/1/20.
-//
+/**
+* @file action_type.c
+* Betriebssysteme MyFind Action-Type-File
+* Beispiel 1
+*
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
 #include "action_type.h"
 #include <sys/stat.h>
@@ -11,17 +20,19 @@
 #include <stdio.h>
 
 
-/*
- * TODO: Implement!
- */
 static int TYPES_TOTAL = 0;
+
+static int parseTypeParams(char *params, TYPESTRUCT *typeList);
+static int isBlock(mode_t mode);
+static int isCharacter(mode_t mode);
+static int isDirectory(mode_t mode);
+static int isNamedPipe(mode_t mode);
+static int isRegularFile(mode_t mode);
+static int isSymbolicLink(mode_t mode);
+static int isSocket(mode_t mode);
 
 int doActionType(char *filePath, char *params){
     int returnValue = 0;
-    // Prevent errors about unused params; Delete once function is implemented!
-    //params = params;
-    // ------------------------------------------------------------------------
-
 
     if(params == NULL){
         returnValue = -1;
@@ -55,6 +66,13 @@ int doActionType(char *filePath, char *params){
     return returnValue;
 }
 
+/**
+ * @brief Auxiliary function to parse the types
+ *
+ * @param typelist List of types
+ * @param params Params of type
+ * @return int 0 on success, 1 on failure
+ */
 static int parseTypeParams(char *params, TYPESTRUCT *typeList){
     char tmpParams[strlen(params)];
     if(strcpy(tmpParams, params) == NULL){

@@ -1,12 +1,16 @@
-//*
-// @file action_name.c
-// Betriebssysteme MyFind-Main-File
-// Beispiel 1
-//
-// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
-// @author Milan Kollmann <ic19b058@technikum-wien.at>
-// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
-// @date 2020/02/22
+/**
+* @file action_name.c
+* Betriebssysteme MyFind Action-Name-File
+* Beispiel 1
+*
+* @brief Contains logic for "-name" action
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
 #include "action_name.h"
 #include <string.h>
@@ -14,6 +18,14 @@
 #include <error.h>
 #include <errno.h>
 #include <stdlib.h>
+
+/**
+ * @brief Function to split up the path to file to get the filename
+ *
+ * @param filePath path to file
+ * @return char array containing filename on success, NULL on failure
+ */
+static char *fileNameFromPath(char *filePath);
 
 int doActionName(char *filePath, char *params){
 

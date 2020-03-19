@@ -1,14 +1,16 @@
-//*
-// @file action_user.h
-// Betriebssysteme MyFind-Main-File
-// Beispiel 1
-//
-// @author Sebastian Stampfel <ic19b084@technikum-wien.at>
-// @author Milan Kollmann <ic19b058@technikum-wien.at>
-// @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
-// @date 2020/02/22
-//
-//
+/**
+* @file action_user.h
+* Betriebssysteme MyFind Action-User-Header-File
+* Beispiel 1
+* 
+* @brief Contains logic for "-user" action
+* @author Sebastian Stampfel <ic19b084@technikum-wien.at>
+* @author Milan Kollmann <ic19b058@technikum-wien.at>
+* @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
+* @date 2020/02/22
+*
+* @version 1
+*/
 
 #ifndef MYFIND_DEBUG_ACTION_USER_H
 #define MYFIND_DEBUG_ACTION_USER_H
@@ -41,25 +43,6 @@
  *         -1 on failure 
  */
 int doActionUser(char *fileName, char *params);
-
-/**
- * @brief Checks /etc/passwd file for supplied params
- *
- * Params are treated as a valid username first. Should no user matching the supplied
- * name be found, params is treated as an UID.
- *
- * @param params Username or uid to be checked for
- * @return -1 on error, 0 if valid name was supplied, 1 if valid uid was supplied
- */
-static int checkPWFile(char *params);
-
-/**
- * @brief Function to get the related username of a passed uid
- *
- * @param uid uid to get related username
- * @return char array containing the username on success, empty char array on failure
- */
-static char* getUser(long uid);
 
 
 #endif //MYFIND_DEBUG_ACTION_USER_H
