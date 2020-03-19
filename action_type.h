@@ -11,7 +11,23 @@ typedef struct type {
 
 }TYPESTRUCT;
 
+
+/**
+ * @brief Function to execute a certain action of type x
+ * 
+ * @param filePath Path to the file
+ * @param params Params of action
+ * @return int 0 on success, 1 on failure 
+ */
 int doActionType(char *filePath, char *params);
+
+/**
+ * @brief Function to check for the type of the action
+ * 
+ * @param typelist List of types
+ * @param params Params of type
+ * @return int 0 on success, 1 on failure 
+ */
 int parseTypeParams(char *params, TYPESTRUCT *typeList);
 /**
  * b = block

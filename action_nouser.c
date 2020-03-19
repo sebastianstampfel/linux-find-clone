@@ -21,7 +21,7 @@ int doActionNoUser(char *fileName, char *params){
 
     errno = 0;
     if (lstat(fileName, &buf) == -1) {
-        error(0, errno, "File does not exist kek");
+        error(0, errno, "File does not exist!");
         return -1;
     }
     if (getpwuid(buf.st_uid) == NULL) {
