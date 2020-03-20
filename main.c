@@ -81,12 +81,6 @@
 static int FLAG_PRINT_ONLY = 1;
 
 /**
- * @brief GLOBAL - Tracks if "." and ".." have been printed to stdout
- * 0: not printed yet, 1: printed
- */
-static int FLAG_STD_DIRS_PRINTED = 0;
-
-/**
  * @brief GLOBAL - Total count of actions supplied as command line arguments.
  */
 static int ACTION_COUNT = 0;
@@ -867,7 +861,10 @@ static int printEntry(char *fileName, int flags){
 
         *(permissions + 10) = '\0';
 
-        printf("%s %3ld ", permissions, fileStats.st_nlink);
+        if(printf("%s %3ld ", permissions, fileStats.st_nlink) < 0){
+            error(0, errno, "Error while printing to stdout");
+            return CRITICAL;
+        }
 
         errno = 0;
         const struct passwd *pwdOwner = getpwuid(fileStats.st_uid);
@@ -877,11 +874,17 @@ static int printEntry(char *fileName, int flags){
                 return CRITICAL;
             } else {
                 // user not found; print uid
-                printf("%-8u ", fileStats.st_uid);
+                if(printf("%-8u ", fileStats.st_uid) < 0){
+                    error(0, errno, "Error while printing to stdout");
+                    return CRITICAL;
+                }
             }
         } else {
             // user found; print name
-            printf("%-8s ", pwdOwner->pw_name);
+            if(printf("%-8s ", pwdOwner->pw_name) < 0){
+                error(0, errno, "Error while printing to stdout");
+                return CRITICAL;
+            }
         }
 
         errno = 0;
@@ -892,28 +895,49 @@ static int printEntry(char *fileName, int flags){
                 return CRITICAL;
             } else {
                 // group not found; print gid
-                printf("%-8u ", fileStats.st_gid);
+                if(printf("%-8u ", fileStats.st_gid) < 0){
+                    error(0, errno, "Error while printing to stdout");
+                    return CRITICAL;
+                }
             }
         } else {
             // group found; print name
-            printf("%-8s ", grpOwner->gr_name);
+            if(printf("%-8s ", grpOwner->gr_name) < 0){
+                error(0, errno, "Error while printing to stdout");
+                return CRITICAL;
+            }
         }
 
         struct tm *lastModifiedCon = localtime(&fileStats.st_mtim.tv_sec);
         char lastModDateFormatted[13]; /* 13 - fixed date length */
 
-        strftime(lastModDateFormatted,13,"%b %e %H:%M", lastModifiedCon);
-
-        if(isDevice == 1){
-            printf("%3d, %3d ", major(fileStats.st_rdev), minor(fileStats.st_rdev));
-        } else {
-            printf("%8ld ", fileStats.st_size);
+        if(strftime(lastModDateFormatted,13,"%b %e %H:%M", lastModifiedCon) == 0){
+            error(0, errno, "Error while formatting date.");
+            return CRITICAL;
         }
 
-        printf("%s ", lastModDateFormatted);
+        if(isDevice == 1){
+            if(printf("%3d, %3d ", major(fileStats.st_rdev), minor(fileStats.st_rdev)) < 0){
+                error(0, errno, "Error while printing to stdout");
+                return CRITICAL;
+            }
+        } else {
+            if(printf("%8ld ", fileStats.st_size) < 0){
+                error(0, errno, "Error while printing to stdout");
+                return CRITICAL;
+            }
+        }
+
+        if(printf("%s ", lastModDateFormatted) < 0){
+            error(0, errno, "Error while printing to stdout");
+            return CRITICAL;
+        }
 
         if(!isLink){
-            printf("%s\n", fileName);
+            if(printf("%s\n", fileName) < 0){
+                error(0, errno, "Error while printing to stdout");
+                return CRITICAL;
+            }
         } else {
             char linkbuf[fileStats.st_size + 1];
             const int charsread = readlink(fileName ,linkbuf, fileStats.st_size);
@@ -922,7 +946,10 @@ static int printEntry(char *fileName, int flags){
                 /* error */
             } else {
                 linkbuf[fileStats.st_size] = '\0';
-                printf("%s -> %s\n", fileName, linkbuf);
+                if(printf("%s -> %s\n", fileName, linkbuf) < 0){
+                    error(0, errno, "Error while printing to stdout");
+                    return CRITICAL;
+                }
             }
         }
     }
