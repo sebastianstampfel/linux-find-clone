@@ -81,6 +81,12 @@
 static int FLAG_PRINT_ONLY = 1;
 
 /**
+ * @brief GLOBAL - Tracks if "." and ".." have been printed to stdout
+ * 0: not printed yet, 1: printed
+ */
+static int FLAG_STD_DIRS_PRINTED = 0;
+
+/**
  * @brief GLOBAL - Total count of actions supplied as command line arguments.
  */
 static int ACTION_COUNT = 0;
@@ -393,7 +399,6 @@ static int checkFile(char *fullPath, ACTION *listHead){
         if(*current->actionFunction != NULL){
             int retVal = (*current->actionFunction)(fullPath, current->param);
             if(retVal < 0){
-                //error(0, errno, "Something bad happened, idk what.");
                 return CRITICAL;
             } else if(retVal == 0){
                 checksPerformed++;
@@ -498,7 +503,7 @@ static int parseParams(int argc, char *argv[], ACTION *listHead, char **startDir
         returnValue = CRITICAL;
     } else {
         if(strcmp(argv[1], "./") == 0){
-            *startDir = calloc(2, sizeof(char)); // warum calloc()? => array
+            *startDir = calloc(2, sizeof(char));
             if(*startDir == NULL){
                 fprintf(stderr, "%s: Error while allocating memory.\n", argv[0]);
                 returnValue = CRITICAL;
@@ -602,8 +607,11 @@ static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
     if(FLAG_PRINT_ONLY != 0 && type != PRINT && type != LS){
         FLAG_PRINT_ONLY = 0;    // Action(s) different to print was provided as arguments
     }
+
     ACTION *currentEntry = listHead;
 
+    // Is the current entry head entry and are no further nodes available?
+    // Then fill head node
     if(currentEntry != NULL && currentEntry->prev == NULL && currentEntry->next == NULL && currentEntry->param == NULL && currentEntry->type == 0){
         currentEntry->type = type;
         if(params != NULL || type == NOUSER || type == PRINT || type == LS){
@@ -654,7 +662,7 @@ static ACTION *addListEntry(ACTION *listHead, int type, const char *params){
         } else {
             return NULL;
         }
-    } else {
+    } else { // More nodes than just head node available; travel down list and add new node at end
         while (1) {
             if (currentEntry->next != NULL) {
                 currentEntry = currentEntry->next;
