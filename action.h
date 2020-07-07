@@ -1,8 +1,5 @@
 /**
  * @file action.h
- * @author Sebastian Stampfel <ic19b084@technikum-wien.at>
- * @author Milan Kollmann <ic19b058@technikum-wien.at>
- * @author Benjamin Wiesbauer <ic19b096@technikum-wien.at>
  * @brief Header file containing the struct definition for action struct and 
  *          macros for action types.
  * @version 0.1

@@ -1,5 +1,5 @@
-# BIC2 BES - MyFind - Kool Kidz Klub
-Myfind for BES. 'Nough said.
+# Educational 'find' clone
+Partial clone of 'find' on Linux. Done for a university course.
 
 ## Compiling
 
